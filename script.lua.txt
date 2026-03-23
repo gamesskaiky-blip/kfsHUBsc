@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.6 (Photo Style UI Redesign)
+-- Version 3.7 (Inject Fallback Fix)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.6"
+local scriptVersion = "3.7"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -661,7 +661,7 @@ function mainScript()
     reInjectBtn.Indicator.BackgroundColor3 = Color3_fromRGB(255, 200, 0)
 
     local function performReInject()
-        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
+        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" and githubRawURL ~= "" then
             createNotification("BUSCANDO ATUALIZAÇÃO...", Color3_fromRGB(255, 200, 0))
             local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
             if success and result then
@@ -679,8 +679,13 @@ function mainScript()
                 createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
             end
         else
-            createNotification("URL DO GITHUB NÃO CONFIGURADA!", Color3_fromRGB(255, 50, 50))
-            warn("KFS HUB: Por favor, configure a URL do seu GitHub Raw na linha 50 do script.")
+            -- Local Reset Fallback (Se a URL não estiver configurada, apenas reinicia a HUB localmente)
+            createNotification("REINICIANDO HUB (LOCAL)...", Color3_fromRGB(255, 200, 0))
+            task_wait(0.5)
+            getgenv().KFSHUB_Unload()
+            task_delay(0.1, function()
+                task_spawn(mainScript)
+            end)
         end
     end
 
