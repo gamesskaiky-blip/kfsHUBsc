@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.8 (Fixed Re-Inject Logic)
+-- Version 3.9 (ESP Keybind T)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.8"
+local scriptVersion = "3.9"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -1038,6 +1038,8 @@ getgenv().KFSHUB_MainScript = function()
             mainFrame.Visible = guiVisible
         
         -- Keybinds
+        elseif input.KeyCode == Enum.KeyCode.T then
+            espSwitch.update()
         elseif input.KeyCode == Enum.KeyCode.F then
             flySwitch.update()
         elseif input.KeyCode == Enum.KeyCode.U then
