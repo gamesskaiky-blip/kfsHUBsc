@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.1 (Auto-Update Support)
+-- Version 3.2 (Anime Edition & Pro UI)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -43,12 +43,13 @@ local camera = Workspace.CurrentCamera
 local userId = player.UserId
 local discordLink = "https://discord.gg/Z2UWDvS2FP"
 local authFile = "kfs_auth_v2.txt"
+local animeImageId = "rbxassetid://13111111111" -- Substitua pelo ID da imagem do Sung Jin-Woo no Roblox
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.1"
-local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" -- Coloque o link do seu arquivo RAW aqui
+local scriptVersion = "3.2"
+local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
--- ======= VALID KEYS LIST (50 KEYS) =======
+-- ======= VALID KEYS LIST =======
 local validKeys = {
     ["KFS-7A9X2P-4M8Q1Z"] = true, ["KFS-X3K8L2-9P1D4F"] = true, ["KFS-2ZQ9W1-8L4N6A"] = true, ["KFS-M8P3X9-1Q7Z2K"] = true, ["KFS-4L2D9F-7X1A8Q"] = true,
     ["KFS-9Q1Z7K-3M4P2X"] = true, ["KFS-1A8Q4L-2D9F7X"] = true, ["KFS-8L4N6A-9Q1Z3M"] = true, ["KFS-3M4P2X-8L1A9Q"] = true, ["KFS-2D9F7X-4L8Q1Z"] = true,
@@ -89,12 +90,12 @@ local fovRadius = 150
 local espMaxDistance = 5000
 local espRangeMin, espRangeMax = 2000, 10000
 
--- UI Colors (Black & Blue)
+-- UI Colors (Modern Dark & Pro Blue)
 local uiAccent = Color3_fromRGB(0, 170, 255)
-local uiBG = Color3_fromRGB(5, 5, 5)
-local uiCard = Color3_fromRGB(12, 12, 12)
+local uiBG = Color3_fromRGB(0, 0, 0)
+local uiCard = Color3_fromRGB(15, 15, 15)
 local uiText = Color3_fromRGB(255, 255, 255)
-local uiDimText = Color3_fromRGB(180, 180, 180)
+local uiDimText = Color3_fromRGB(200, 200, 200)
 
 -- State
 local isUnlocked = checkAuth()
@@ -152,23 +153,24 @@ local function createNotification(text, color)
     screenGui.Parent = CoreGui
 
     local frame = Instance_new("Frame")
-    frame.Size = UDim2_new(0, 260, 0, 50)
-    frame.Position = UDim2_new(0, -280, 1, -100)
+    frame.Size = UDim2_new(0, 280, 0, 50)
+    frame.Position = UDim2_new(0, -300, 1, -100)
     frame.BackgroundColor3 = uiBG
+    frame.BackgroundTransparency = 0.2
     frame.BorderSizePixel = 0
     frame.Parent = screenGui
     
-    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 4)
+    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 0)
     local stroke = Instance_new("UIStroke", frame)
     stroke.Thickness = 2
     stroke.Color = color
-    stroke.Transparency = 0.2
+    stroke.Transparency = 0.3
 
     local label = Instance_new("TextLabel", frame)
     label.Size = UDim2_new(1, -20, 1, 0)
     label.Position = UDim2_new(0, 15, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = text
+    label.Text = string_upper(text)
     label.Font = Enum.Font.GothamBold
     label.TextSize = 14
     label.TextColor3 = uiText
@@ -178,7 +180,7 @@ local function createNotification(text, color)
     
     task_delay(3, function()
         pcall(function()
-            frame:TweenPosition(UDim2_new(0, -280, 1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quart, 0.4, true)
+            frame:TweenPosition(UDim2_new(0, -300, 1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quart, 0.4, true)
             task_wait(0.5)
             screenGui:Destroy()
         end)
@@ -188,16 +190,13 @@ end
 -- ======= AUTO-UPDATE LOGIC =======
 task_spawn(function()
     while getgenv().KFSHUB_Loaded do
-        task_wait(300) -- Verifica a cada 5 minutos
+        task_wait(300) 
         if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
-            local success, result = pcall(function()
-                return game:HttpGet(githubRawURL)
-            end)
+            local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
             if success and result then
-                -- Procura a versão no comentário do topo: "-- Version X.X"
                 local remoteVersion = result:match('-- Version ([%d%.]+)')
                 if remoteVersion and remoteVersion ~= scriptVersion then
-                    createNotification("NOVA ATUALIZAÇÃO ENCONTRADA! ATUALIZANDO...", Color3_fromRGB(255, 200, 0))
+                    createNotification("NOVA ATUALIZAÇÃO DISPONÍVEL! ATUALIZANDO...", Color3_fromRGB(255, 200, 0))
                     task_wait(2)
                     getgenv().KFSHUB_Unload()
                     loadstring(result)()
@@ -217,78 +216,98 @@ local function showKeyGUI()
     frame.Size = UDim2_new(0, 400, 0, 300)
     frame.Position = UDim2_new(0.5, -200, 0.5, -150)
     frame.BackgroundColor3 = uiBG
+    frame.BackgroundTransparency = 0.3
     frame.BorderSizePixel = 0
     frame.Parent = screenGui
     Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 0)
+    
+    local bgImg = Instance_new("ImageLabel")
+    bgImg.Size = UDim2_new(1, 0, 1, 0)
+    bgImg.Image = animeImageId
+    bgImg.ImageTransparency = 0.4
+    bgImg.BackgroundTransparency = 1
+    bgImg.ScaleType = Enum.ScaleType.Crop
+    bgImg.Parent = frame
+
     local stroke = Instance_new("UIStroke", frame)
     stroke.Color = uiAccent
     stroke.Thickness = 2
 
     local title = Instance_new("TextLabel")
     title.Size = UDim2_new(1, 0, 0, 60)
-    title.Text = "🛡️ KFS SCRIPT EDITION"
+    title.Text = "KFS SCRIPT EDITION"
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 22
+    title.TextSize = 24
     title.TextColor3 = uiAccent
     title.BackgroundTransparency = 1
+    title.ZIndex = 2
     title.Parent = frame
 
     local desc = Instance_new("TextLabel")
     desc.Size = UDim2_new(1, -40, 0, 40)
     desc.Position = UDim2_new(0, 20, 0, 60)
-    desc.Text = "Entre no Discord para comprar sua Key única:\n" .. discordLink
+    desc.Text = "ACESSE O DISCORD PARA OBTER SUA KEY:\n" .. discordLink
     desc.Font = Enum.Font.GothamBold
     desc.TextSize = 13
-    desc.TextColor3 = uiDimText
+    desc.TextColor3 = uiText
     desc.BackgroundTransparency = 1
+    desc.ZIndex = 2
     desc.Parent = frame
 
     local hwidBox = Instance_new("TextBox")
     hwidBox.Size = UDim2_new(1, -60, 0, 40)
     hwidBox.Position = UDim2_new(0, 30, 0, 110)
-    hwidBox.BackgroundColor3 = uiCard
+    hwidBox.BackgroundColor3 = Color3_fromRGB(0, 0, 0)
+    hwidBox.BackgroundTransparency = 0.5
     hwidBox.Text = "ID: " .. userId
     hwidBox.TextColor3 = uiAccent
     hwidBox.TextEditable = false
     hwidBox.Font = Enum.Font.Code
-    hwidBox.TextSize = 15
+    hwidBox.TextSize = 16
+    hwidBox.ZIndex = 2
     hwidBox.Parent = frame
-    Instance_new("UICorner", hwidBox).CornerRadius = UDim.new(0, 4)
+    Instance_new("UICorner", hwidBox).CornerRadius = UDim.new(0, 0)
 
     local keyBox = Instance_new("TextBox")
     keyBox.Size = UDim2_new(1, -60, 0, 40)
     keyBox.Position = UDim2_new(0, 30, 0, 160)
-    keyBox.BackgroundColor3 = uiCard
+    keyBox.BackgroundColor3 = Color3_fromRGB(0, 0, 0)
+    keyBox.BackgroundTransparency = 0.5
     keyBox.PlaceholderText = "INSIRA SUA KEY AQUI..."
-    keyBox.PlaceholderColor3 = Color3_fromRGB(100, 100, 100)
+    keyBox.PlaceholderColor3 = Color3_fromRGB(150, 150, 150)
     keyBox.Text = ""
     keyBox.TextColor3 = uiText
     keyBox.Font = Enum.Font.GothamBold
     keyBox.TextSize = 14
+    keyBox.ZIndex = 2
     keyBox.Parent = frame
-    Instance_new("UICorner", keyBox).CornerRadius = UDim.new(0, 4)
+    Instance_new("UICorner", keyBox).CornerRadius = UDim.new(0, 0)
 
     local btnDiscord = Instance_new("TextButton")
     btnDiscord.Size = UDim2_new(0.45, 0, 0, 45)
     btnDiscord.Position = UDim2_new(0, 30, 0, 220)
-    btnDiscord.BackgroundColor3 = Color3_fromRGB(40, 40, 40)
+    btnDiscord.BackgroundColor3 = Color3_fromRGB(30, 30, 30)
+    btnDiscord.BackgroundTransparency = 0.2
     btnDiscord.Text = "COPIAR DISCORD"
     btnDiscord.Font = Enum.Font.GothamBold
     btnDiscord.TextColor3 = uiText
     btnDiscord.TextSize = 13
+    btnDiscord.ZIndex = 2
     btnDiscord.Parent = frame
-    Instance_new("UICorner", btnDiscord).CornerRadius = UDim.new(0, 4)
+    Instance_new("UICorner", btnDiscord).CornerRadius = UDim.new(0, 0)
 
     local btnVerify = Instance_new("TextButton")
     btnVerify.Size = UDim2_new(0.45, 0, 0, 45)
     btnVerify.Position = UDim2_new(0.55, -30, 0, 220)
     btnVerify.BackgroundColor3 = uiAccent
+    btnVerify.BackgroundTransparency = 0.2
     btnVerify.Text = "VERIFICAR"
     btnVerify.Font = Enum.Font.GothamBold
     btnVerify.TextColor3 = Color3_fromRGB(0, 0, 0)
-    btnVerify.TextSize = 14
+    btnVerify.TextSize = 15
+    btnVerify.ZIndex = 2
     btnVerify.Parent = frame
-    Instance_new("UICorner", btnVerify).CornerRadius = UDim.new(0, 4)
+    Instance_new("UICorner", btnVerify).CornerRadius = UDim.new(0, 0)
 
     btnDiscord.MouseButton1Click:Connect(function()
         if setclipboard then setclipboard(discordLink) end
@@ -303,7 +322,7 @@ local function showKeyGUI()
             if writefile then writefile(authFile, inputKey .. "|" .. tostring(userId)) end
             screenGui:Destroy()
             isUnlocked = true
-            createNotification("KEY VÁLIDA! BEM-VINDO.", Color3_fromRGB(50, 255, 50))
+            createNotification("ACESSO LIBERADO!", Color3_fromRGB(50, 255, 50))
             task_wait(0.5)
             mainScript()
         else
@@ -360,37 +379,50 @@ function mainScript()
 
     local mainFrame = Instance_new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2_new(0, 500, 0, 400)
-    mainFrame.Position = UDim2_new(0.5, -250, 0.5, -200)
+    mainFrame.Size = UDim2_new(0, 550, 0, 420)
+    mainFrame.Position = UDim2_new(0.5, -275, 0.5, -210)
     mainFrame.BackgroundColor3 = uiBG
+    mainFrame.BackgroundTransparency = 0.3
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     Instance_new("UICorner", mainFrame).CornerRadius = UDim.new(0, 0)
+    
+    local bgImg = Instance_new("ImageLabel")
+    bgImg.Size = UDim2_new(1, 0, 1, 0)
+    bgImg.Image = animeImageId
+    bgImg.ImageTransparency = 0.5
+    bgImg.BackgroundTransparency = 1
+    bgImg.ScaleType = Enum.ScaleType.Crop
+    bgImg.Parent = mainFrame
+
     local mainStroke = Instance_new("UIStroke", mainFrame)
     mainStroke.Color = uiAccent
     mainStroke.Thickness = 2
 
     -- Sidebar
     local sidebar = Instance_new("Frame")
-    sidebar.Size = UDim2_new(0, 150, 1, 0)
-    sidebar.BackgroundColor3 = uiCard
+    sidebar.Size = UDim2_new(0, 160, 1, 0)
+    sidebar.BackgroundColor3 = Color3_fromRGB(0, 0, 0)
+    sidebar.BackgroundTransparency = 0.4
     sidebar.BorderSizePixel = 0
+    sidebar.ZIndex = 2
     sidebar.Parent = mainFrame
 
     local title = Instance_new("TextLabel")
-    title.Size = UDim2_new(1, 0, 0, 60)
-    title.Text = "🛡️ KFS HUB"
+    title.Size = UDim2_new(1, 0, 0, 70)
+    title.Text = "KFS HUB"
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 18
+    title.TextSize = 22
     title.TextColor3 = uiAccent
     title.BackgroundTransparency = 1
     title.Parent = sidebar
 
     -- Tab Container
     local container = Instance_new("Frame")
-    container.Size = UDim2_new(1, -150, 1, 0)
-    container.Position = UDim2_new(0, 150, 0, 0)
+    container.Size = UDim2_new(1, -160, 1, 0)
+    container.Position = UDim2_new(0, 160, 0, 0)
     container.BackgroundTransparency = 1
+    container.ZIndex = 2
     container.Parent = mainFrame
 
     local movementTab = Instance_new("ScrollingFrame")
@@ -399,6 +431,7 @@ function mainScript()
     movementTab.BackgroundTransparency = 1
     movementTab.BorderSizePixel = 0
     movementTab.ScrollBarThickness = 2
+    movementTab.ZIndex = 2
     movementTab.Parent = container
 
     local combatTab = Instance_new("ScrollingFrame")
@@ -408,77 +441,88 @@ function mainScript()
     combatTab.BorderSizePixel = 0
     combatTab.ScrollBarThickness = 2
     combatTab.Visible = false
+    combatTab.ZIndex = 2
     combatTab.Parent = container
 
     -- UI HELPERS
     local function createTabBtn(name, pos, parent)
         local btn = Instance_new("TextButton")
-        btn.Size = UDim2_new(1, -20, 0, 40)
+        btn.Size = UDim2_new(1, -20, 0, 45)
         btn.Position = UDim2_new(0, 10, 0, pos)
         btn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
+        btn.BackgroundTransparency = 0.3
         btn.Text = name
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = 14
         btn.TextColor3 = uiText
+        btn.ZIndex = 3
         btn.Parent = parent
-        Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+        Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 0)
         return btn
     end
 
     local function createSectionTitle(name, parent)
         local label = Instance_new("TextLabel")
-        label.Size = UDim2_new(1, 0, 0, 30)
-        label.Text = "— " .. name .. " —"
+        label.Size = UDim2_new(1, 0, 0, 35)
+        label.Text = "— " .. string_upper(name) .. " —"
         label.Font = Enum.Font.GothamBold
-        label.TextSize = 13
+        label.TextSize = 14
         label.TextColor3 = uiAccent
         label.BackgroundTransparency = 1
+        label.ZIndex = 3
         label.Parent = parent
         return label
     end
 
     local function createToggle(name, parent, callback)
         local btn = Instance_new("TextButton")
-        btn.Size = UDim2_new(1, 0, 0, 35)
-        btn.BackgroundColor3 = Color3_fromRGB(15, 15, 15)
-        btn.Text = "  " .. name .. ": OFF"
+        btn.Size = UDim2_new(1, 0, 0, 40)
+        btn.BackgroundColor3 = Color3_fromRGB(10, 10, 10)
+        btn.BackgroundTransparency = 0.4
+        btn.Text = "  " .. string_upper(name) .. ": OFF"
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = 13
         btn.TextColor3 = uiDimText
         btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.ZIndex = 3
         btn.Parent = parent
-        Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+        Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 0)
         btn.MouseButton1Click:Connect(function() callback(btn) end)
         return btn
     end
 
     local function createSlider(name, min, max, current, parent, callback)
         local frame = Instance_new("Frame")
-        frame.Size = UDim2_new(1, 0, 0, 50)
+        frame.Size = UDim2_new(1, 0, 0, 55)
         frame.BackgroundTransparency = 1
+        frame.ZIndex = 3
         frame.Parent = parent
         local label = Instance_new("TextLabel")
-        label.Size = UDim2_new(1, 0, 0, 20)
-        label.Text = name .. ": " .. math_floor(current)
+        label.Size = UDim2_new(1, 0, 0, 25)
+        label.Text = string_upper(name) .. ": " .. math_floor(current)
         label.Font = Enum.Font.GothamBold
-        label.TextSize = 12
+        label.TextSize = 13
         label.TextColor3 = uiDimText
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.BackgroundTransparency = 1
+        label.ZIndex = 4
         label.Parent = frame
         local bar = Instance_new("Frame")
-        bar.Size = UDim2_new(1, 0, 0, 6)
-        bar.Position = UDim2_new(0, 0, 0, 25)
+        bar.Size = UDim2_new(1, 0, 0, 8)
+        bar.Position = UDim2_new(0, 0, 0, 30)
         bar.BackgroundColor3 = Color3_fromRGB(30, 30, 30)
+        bar.BackgroundTransparency = 0.3
         bar.BorderSizePixel = 0
+        bar.ZIndex = 4
         bar.Parent = frame
-        Instance_new("UICorner", bar)
+        Instance_new("UICorner", bar).CornerRadius = UDim.new(0, 0)
         local fill = Instance_new("Frame")
         fill.Size = UDim2_new((current - min) / (max - min), 0, 1, 0)
         fill.BackgroundColor3 = uiAccent
         fill.BorderSizePixel = 0
+        fill.ZIndex = 5
         fill.Parent = bar
-        Instance_new("UICorner", fill)
+        Instance_new("UICorner", fill).CornerRadius = UDim.new(0, 0)
         bar.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 dragging = {bar, fill, label, min, max, name, callback}
@@ -488,8 +532,8 @@ function mainScript()
     end
 
     -- Tab Selection
-    local mBtn = createTabBtn("MOVIMENTAÇÃO", 70, sidebar)
-    local cBtn = createTabBtn("COMBATE", 120, sidebar)
+    local mBtn = createTabBtn("MOVIMENTAÇÃO", 80, sidebar)
+    local cBtn = createTabBtn("COMBATE", 135, sidebar)
     mBtn.MouseButton1Click:Connect(function()
         movementTab.Visible = true combatTab.Visible = false
         mBtn.BackgroundColor3 = uiAccent mBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
@@ -704,7 +748,7 @@ function mainScript()
             local mousePos = UserInputService:GetMouseLocation().X
             local relPos = math_clamp((mousePos - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
             local val = min + (max - min) * relPos
-            fill.Size = UDim2_new(relPos, 0, 1, 0) label.Text = name .. ": " .. math_floor(val)
+            fill.Size = UDim2_new(relPos, 0, 1, 0) label.Text = string_upper(name) .. ": " .. math_floor(val)
             callback(val)
         end
     end)
