@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.4 (Fixed UI & Optimization)
+-- Version 3.5 (Keybinds & Manual Update)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.3"
+local scriptVersion = "3.5"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -585,21 +585,16 @@ function mainScript()
     selectTab(mBtn, movementTab)
 
     -- ======= CONTENT =======
-    createSectionTitle("VISUAIS (ESP)", movementTab)
-    local espTgl = createToggle("ESP SYSTEM", movementTab, function(b)
+    local function toggleESP(btn)
         espEnabled = not espEnabled
-        b.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
-        b.TextColor3 = espEnabled and uiAccent or uiDimText
-    end)
-    espTgl.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
-    espTgl.TextColor3 = espEnabled and uiAccent or uiDimText
-    createSlider("ALCANCE ESP", espRangeMin, espRangeMax, espMaxDistance, movementTab, function(v) espMaxDistance = v end)
+        btn.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
+        btn.TextColor3 = espEnabled and uiAccent or uiDimText
+    end
 
-    createSectionTitle("MOVIMENTO", movementTab)
-    local flyTgl = createToggle("FLY MODE", movementTab, function(b)
+    local function toggleFly(btn)
         flyEnabled = not flyEnabled
-        b.Text = "  FLY MODE: " .. (flyEnabled and "ON" or "OFF")
-        b.TextColor3 = flyEnabled and uiAccent or uiDimText
+        btn.Text = "  FLY MODE: " .. (flyEnabled and "ON" or "OFF")
+        btn.TextColor3 = flyEnabled and uiAccent or uiDimText
         
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -617,39 +612,58 @@ function mainScript()
                 bodyGyro.CFrame = camera.CFrame
                 bodyGyro.Parent = hrp
             end
+            createNotification("FLY ATIVADO (F)", uiAccent)
         else
             if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
             if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
             if hrp then hrp.Velocity = Vector3_zero end
+            createNotification("FLY DESATIVADO (F)", Color3_fromRGB(255, 50, 50))
         end
-    end)
-    createSlider("VELOCIDADE FLY", flySpeedMin, flySpeedMax, flySpeed, movementTab, function(v) flySpeed = v end)
+    end
 
-    createToggle("NOCLIP (PAREDES)", movementTab, function(b)
+    local function toggleNoclip(btn)
         noclipEnabled = not noclipEnabled
-        b.Text = "  NOCLIP (PAREDES): " .. (noclipEnabled and "ON" or "OFF")
-        b.TextColor3 = noclipEnabled and uiAccent or uiDimText
+        btn.Text = "  NOCLIP (PAREDES): " .. (noclipEnabled and "ON" or "OFF")
+        btn.TextColor3 = noclipEnabled and uiAccent or uiDimText
         
         if noclipEnabled then
             updateCharCache()
+            createNotification("NOCLIP ATIVADO (U)", uiAccent)
         else
-            -- Force collision back immediately
             updateCharCache()
             for _, part in ipairs(characterParts) do
-                if part and part.Parent then
-                    part.CanCollide = true
-                end
+                if part and part.Parent then part.CanCollide = true end
             end
+            createNotification("NOCLIP DESATIVADO (U)", Color3_fromRGB(255, 50, 50))
         end
-    end)
+    end
+
+    local function toggleAimbot(btn)
+        aimbotEnabled = not aimbotEnabled
+        btn.Text = "  AIMBOT SYSTEM: " .. (aimbotEnabled and "ON" or "OFF")
+        btn.TextColor3 = aimbotEnabled and uiAccent or uiDimText
+        currentAimbotTarget = nil
+        if aimbotEnabled then
+            createNotification("AIMBOT ATIVADO (G)", uiAccent)
+        else
+            createNotification("AIMBOT DESATIVADO (G)", Color3_fromRGB(255, 50, 50))
+        end
+    end
+
+    createSectionTitle("VISUAIS (ESP)", movementTab)
+    local espBtn = createToggle("ESP SYSTEM", movementTab, toggleESP)
+    espBtn.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
+    espBtn.TextColor3 = espEnabled and uiAccent or uiDimText
+    createSlider("ALCANCE ESP", espRangeMin, espRangeMax, espMaxDistance, movementTab, function(v) espMaxDistance = v end)
+
+    createSectionTitle("MOVIMENTO", movementTab)
+    local flyBtn = createToggle("FLY MODE", movementTab, toggleFly)
+    createSlider("VELOCIDADE FLY", flySpeedMin, flySpeedMax, flySpeed, movementTab, function(v) flySpeed = v end)
+
+    local noclipBtn = createToggle("NOCLIP (PAREDES)", movementTab, toggleNoclip)
 
     createSectionTitle("COMBATE (AIMBOT)", combatTab)
-    createToggle("AIMBOT SYSTEM", combatTab, function(b)
-        aimbotEnabled = not aimbotEnabled
-        b.Text = "  AIMBOT SYSTEM: " .. (aimbotEnabled and "ON" or "OFF")
-        b.TextColor3 = aimbotEnabled and uiAccent or uiDimText
-        currentAimbotTarget = nil
-    end)
+    local aimbotBtn = createToggle("AIMBOT SYSTEM", combatTab, toggleAimbot)
     createToggle("PARTE: CABEÇA", combatTab, function(b)
         aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head"
         b.Text = "  PARTE: " .. (aimbotTargetPart == "Head" and "CABEÇA" or "TORSO")
@@ -909,7 +923,37 @@ function mainScript()
 
     connect(UserInputService.InputBegan, function(input, gameProcessed)
         if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.Y then guiVisible = not guiVisible mainFrame.Visible = guiVisible end
+        
+        -- Toggle GUI
+        if input.KeyCode == Enum.KeyCode.Y then
+            guiVisible = not guiVisible
+            mainFrame.Visible = guiVisible
+        
+        -- Keybinds
+        elseif input.KeyCode == Enum.KeyCode.F then
+            toggleFly(flyBtn)
+        elseif input.KeyCode == Enum.KeyCode.U then
+            toggleNoclip(noclipBtn)
+        elseif input.KeyCode == Enum.KeyCode.G then
+            toggleAimbot(aimbotBtn)
+        
+        -- Manual Update / Re-execute
+        elseif input.KeyCode == Enum.KeyCode.P then
+            if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
+                createNotification("BUSCANDO ATUALIZAÇÃO...", Color3_fromRGB(255, 200, 0))
+                local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
+                if success and result then
+                    createNotification("REINICIANDO SCRIPT...", uiAccent)
+                    task_wait(1)
+                    getgenv().KFSHUB_Unload()
+                    loadstring(result)()
+                else
+                    createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
+                end
+            else
+                createNotification("URL DO GITHUB NÃO CONFIGURADA!", Color3_fromRGB(255, 50, 50))
+            end
+        end
     end)
 
     createNotification("KFS HUB CARREGADO!", uiAccent)
