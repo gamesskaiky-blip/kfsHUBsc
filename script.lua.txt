@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 4.3 (Emergency Fix - Stable)
+-- Version 4.4 (Bot Aimbot & UI Refined)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "4.3"
+local scriptVersion = "4.4"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -660,6 +660,69 @@ getgenv().KFSHUB_MainScript = function()
         return frame
     end
 
+    local function createSelector(name, parent, options, default, callback)
+        local frame = Instance_new("Frame")
+        frame.Size = UDim2_new(1, 0, 0, 50)
+        frame.BackgroundTransparency = 1
+        frame.ZIndex = 4
+        frame.Parent = parent
+        
+        local label = Instance_new("TextLabel")
+        label.Size = UDim2_new(1, 0, 0, 20)
+        label.Text = name
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 12
+        label.TextColor3 = uiDimText
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.ZIndex = 5
+        label.Parent = frame
+        
+        local btnContainer = Instance_new("Frame")
+        btnContainer.Size = UDim2_new(1, 0, 0, 25)
+        btnContainer.Position = UDim2_new(0, 0, 0, 25)
+        btnContainer.BackgroundTransparency = 1
+        btnContainer.ZIndex = 5
+        btnContainer.Parent = frame
+        
+        local layout = Instance_new("UIListLayout", btnContainer)
+        layout.FillDirection = Enum.FillDirection.Horizontal
+        layout.Padding = UDim.new(0, 5)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        local currentVal = default
+        local buttons = {}
+        
+        for i, opt in ipairs(options) do
+            local btn = Instance_new("TextButton")
+            btn.Name = opt.label
+            btn.Size = UDim2_new(0, 0, 1, 0)
+            btn.AutomaticSize = Enum.AutomaticSize.X
+            btn.BackgroundColor3 = (opt.value == currentVal) and uiAccent or Color3_fromRGB(40, 40, 40)
+            btn.Text = "  " .. string_upper(opt.label) .. "  "
+            btn.Font = Enum.Font.GothamBold
+            btn.TextSize = 11
+            btn.TextColor3 = (opt.value == currentVal) and Color3_fromRGB(0, 0, 0) or uiText
+            btn.BorderSizePixel = 0
+            btn.ZIndex = 6
+            btn.Parent = btnContainer
+            Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+            
+            btn.MouseButton1Click:Connect(function()
+                currentVal = opt.value
+                for _, b in ipairs(buttons) do
+                    b.btn.BackgroundColor3 = (b.val == currentVal) and uiAccent or Color3_fromRGB(40, 40, 40)
+                    b.btn.TextColor3 = (b.val == currentVal) and Color3_fromRGB(0, 0, 0) or uiText
+                end
+                callback(currentVal)
+            end)
+            
+            table_insert(buttons, {btn = btn, val = opt.value})
+        end
+        
+        return frame
+    end
+
     -- Tab Selection
     local mBtn = createTabBtn("MOVIMENTAÇÃO", topBar)
     local cBtn = createTabBtn("COMBATE", topBar)
@@ -780,19 +843,22 @@ getgenv().KFSHUB_MainScript = function()
     end
     local aimbotSwitch = createToggle("Aimbot System", aimCard, aimbotEnabled, toggleAimbot)
     
-    local function toggleAimPart()
-        aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head"
-        createNotification("Parte: " .. (aimbotTargetPart == "Head" and "Cabeça" or "Torso"), uiAccent)
-    end
-    createToggle("Alvo: Torso/Cabeça", aimCard, false, toggleAimPart)
+    createSelector("Focar Em:", aimCard, {
+        {label = "Cabeça", value = "Head"},
+        {label = "Torso", value = "HumanoidRootPart"}
+    }, aimbotTargetPart, function(v) 
+        aimbotTargetPart = v 
+        createNotification("Alvo: " .. (v == "Head" and "Cabeça" or "Torso"), uiAccent)
+    end)
 
-    local function toggleAimType()
-        if aimbotTargetType == "All" then aimbotTargetType = "Players"
-        elseif aimbotTargetType == "Players" then aimbotTargetType = "Bots"
-        else aimbotTargetType = "All" end
-        createNotification("Alvos: " .. aimbotTargetType, uiAccent)
-    end
-    createToggle("Filtrar Alvos", aimCard, false, toggleAimType)
+    createSelector("Filtrar Alvos:", aimCard, {
+        {label = "Todos", value = "All"},
+        {label = "Players", value = "Players"},
+        {label = "Bots", value = "Bots"}
+    }, aimbotTargetType, function(v) 
+        aimbotTargetType = v 
+        createNotification("Filtrando: " .. v, uiAccent)
+    end)
 
     local hitboxCard = createSectionCard("Hitbox", combatTab)
     local function toggleHitbox()
@@ -811,12 +877,16 @@ getgenv().KFSHUB_MainScript = function()
     createSlider("Tamanho", hitboxMin, hitboxMax, hitboxSize, hitboxCard, function(v) hitboxSize = v end)
     createSlider("Transparência", 0, 1, hitboxTransparency, hitboxCard, function(v) hitboxTransparency = v end)
 
-    -- ======= TARGETING LOGIC =======
     local function isSpecialBot(char)
         if not char then return false end
         local name = char.Name:lower()
-        if name:find("ceo") or name:find("drop") or name:find("boss") or name:find("guard") or name:find("mansion") or name:find("police") then
-            return true
+        -- Jailbreak Specific: Drops and Mansion/CEO Bots
+        -- These bots usually have "Guard", "CEO", "Mansion", "Police" or "Boss" in their name
+        -- We also check for Humanoid presence to ensure they are "moving" bots
+        if char:FindFirstChild("Humanoid") then
+            if name:find("ceo") or name:find("drop") or name:find("boss") or name:find("guard") or name:find("mansion") or name:find("police") then
+                return true
+            end
         end
         return false
     end
@@ -830,8 +900,12 @@ getgenv().KFSHUB_MainScript = function()
             if isAimbot and aimbotTargetType == "Bots" then return false end
             return true
         end
-        if not isAimbot then return false end
+        
+        -- If it's not a player, check if it's a bot we want
+        if not isAimbot then return false end -- ESP/Hitbox only for players (as per previous request)
         if aimbotTargetType == "Players" then return false end
+        
+        -- For Aimbot "Bots" or "All" mode, we target special moving bots
         return isSpecialBot(char)
     end
 
