@@ -1,0 +1,728 @@
+-- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
+-- Version 2.5 (Key System & New UI)
+
+-- Re-execution Protection
+if getgenv().KFSHUB_Loaded then
+    pcall(function() getgenv().KFSHUB_Unload() end)
+end
+getgenv().KFSHUB_Loaded = true
+
+-- Localize Globals
+local game = game
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+
+local Vector3_new = Vector3.new
+local Vector3_zero = Vector3.zero
+local Vector2_new = Vector2.new
+local CFrame_new = CFrame.new
+local UDim2_new = UDim2.new
+local Color3_fromRGB = Color3.fromRGB
+local Instance_new = Instance.new
+local task_wait = task.wait
+local task_spawn = task.spawn
+local task_delay = task.delay
+local math_floor = math.floor
+local math_clamp = math.clamp
+local table_insert = table.insert
+local string_format = string.format
+local string_upper = string.upper
+local next = next
+local pcall = pcall
+local ipairs = ipairs
+local pairs = pairs
+local Enum = Enum
+
+-- Locals
+local player = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+local userId = player.UserId
+local discordLink = "https://discord.gg/Z2UWDvS2FP"
+local authFile = "kfs_auth_v2.txt"
+
+-- ======= VALID KEYS LIST (50 KEYS) =======
+local validKeys = {
+    ["KFS-7A9X2P-4M8Q1Z"] = true, ["KFS-X3K8L2-9P1D4F"] = true, ["KFS-2ZQ9W1-8L4N6A"] = true, ["KFS-M8P3X9-1Q7Z2K"] = true, ["KFS-4L2D9F-7X1A8Q"] = true,
+    ["KFS-9Q1Z7K-3M4P2X"] = true, ["KFS-1A8Q4L-2D9F7X"] = true, ["KFS-8L4N6A-9Q1Z3M"] = true, ["KFS-3M4P2X-8L1A9Q"] = true, ["KFS-2D9F7X-4L8Q1Z"] = true,
+    ["KFS-6A1Z9Q-3P8X4L"] = true, ["KFS-Q4L8A1-9Z2D7F"] = true, ["KFS-7X3M9P-1A4Q8L"] = true, ["KFS-1Z2D7F-6A9Q3M"] = true, ["KFS-4Q8L1A-7X3M9P"] = true,
+    ["KFS-9P6A3M-1Z2D7F"] = true, ["KFS-8X1A4Q-9P6M3L"] = true, ["KFS-3L9P6A-8X1Q4Z"] = true, ["KFS-2F7X3M-4Q8L1A"] = true, ["KFS-5Z1A8Q-3L9P6M"] = true,
+    ["KFS-1Q4L8X-5Z3M9A"] = true, ["KFS-8A5Z3M-1Q4L9P"] = true, ["KFS-3M9P6L-8A5Z1Q"] = true, ["KFS-9L8X1Q-3M5Z4A"] = true, ["KFS-4A3M5Z-9L8X1Q"] = true,
+    ["KFS-7M2Q8L-1A9X4P"] = true, ["KFS-1A9X4P-7M2Q8L"] = true, ["KFS-2Q8L7M-4P1A9X"] = true, ["KFS-5P4A1X-2Q8L7M"] = true, ["KFS-6L3M9A-8Q1Z4P"] = true,
+    ["KFS-8Q1Z4P-6L3M9A"] = true, ["KFS-3M9A6L-4P8Q1Z"] = true, ["KFS-4P8Q1Z-3M9A6L"] = true, ["KFS-9A6L3M-1Z4P8Q"] = true, ["KFS-1Z4P8Q-9A6L3M"] = true,
+    ["KFS-7L5A2Q-3M9X1P"] = true, ["KFS-3M9X1P-7L5A2Q"] = true, ["KFS-5A2Q7L-1P3M9X"] = true, ["KFS-1P3M9X-5A2Q7L"] = true, ["KFS-8M4Q2A-6L1Z9P"] = true,
+    ["KFS-6L1Z9P-8M4Q2A"] = true, ["KFS-4Q2A8M-9P6L1Z"] = true, ["KFS-9P6L1Z-4Q2A8M"] = true, ["KFS-2A8M4Q-1Z9P6L"] = true, ["KFS-1Z9P6L-2A8M4Q"] = true,
+    ["KFS-7Q3L5M-8A1P9X"] = true, ["KFS-8A1P9X-7Q3L5M"] = true, ["KFS-3L5M7Q-9X8A1P"] = true, ["KFS-9X8A1P-3L5M7Q"] = true, ["KFS-5M7Q3L-1P9X8A"] = true
+}
+
+-- ======= KEY SYSTEM LOGIC =======
+local function checkAuth()
+    if not isfile or not readfile then return false end
+    if isfile(authFile) then
+        local savedKey = readfile(authFile)
+        if validKeys[savedKey] then
+            return true
+        end
+    end
+    return false
+end
+
+-- ======= CONFIG =======
+local teamCheck = true
+local hitboxSize = 10
+local hitboxMin, hitboxMax = 1, 25
+local hitboxTransparency = 0.7
+local flySpeed = 150
+local flySpeedMin, flySpeedMax = 100, 200
+local aimbotMaxDistance = 1000
+local fovRadius = 150
+local espMaxDistance = 5000
+local espRangeMin, espRangeMax = 2000, 10000
+
+-- UI Colors (More Modern/Premium)
+local uiAccent = Color3_fromRGB(0, 170, 255)
+local uiBG = Color3_fromRGB(10, 10, 12)
+local uiCard = Color3_fromRGB(18, 18, 22)
+local uiText = Color3_fromRGB(240, 240, 240)
+
+-- State
+local isUnlocked = checkAuth()
+local espEnabled = true
+local hitboxEnabled = false
+local flyEnabled = false
+local noclipEnabled = false
+local aimbotEnabled = false
+local guiVisible = true
+local currentAimbotTarget = nil
+local aimbotTargetPart = "Head"
+local aimbotTargetType = "All"
+local dragging = nil
+
+-- Variables for body movement (Fly)
+local bodyVelocity, bodyGyro = nil, nil
+local characterParts = {}
+local scriptConnections = {}
+
+-- Helper for connections
+local function connect(signal, callback)
+    local conn = signal:Connect(callback)
+    table_insert(scriptConnections, conn)
+    return conn
+end
+
+-- ======= UNLOAD FUNCTION (CLEANUP) =======
+getgenv().KFSHUB_Unload = function()
+    getgenv().KFSHUB_Loaded = false
+    for _, conn in ipairs(scriptConnections) do
+        if conn and conn.Connected then conn:Disconnect() end
+    end
+    scriptConnections = {}
+    
+    local gui = CoreGui:FindFirstChild("KFS_UI")
+    if gui then gui:Destroy() end
+    
+    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+    
+    -- Reset hitboxes
+    local plrs = Players:GetPlayers()
+    for _, p in ipairs(plrs) do
+        if p.Character then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.Size = Vector3_new(2, 2, 1) hrp.Transparency = 1 end
+        end
+    end
+end
+
+-- ======= NOTIFICATION SYSTEM =======
+local function createNotification(text, color)
+    color = color or uiAccent
+    local screenGui = Instance_new("ScreenGui")
+    screenGui.Name = "KFS_Notify"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = CoreGui
+
+    local frame = Instance_new("Frame")
+    frame.Size = UDim2_new(0, 240, 0, 45)
+    frame.Position = UDim2_new(0, -260, 1, -100)
+    frame.BackgroundColor3 = uiBG
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    
+    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance_new("UIStroke", frame)
+    stroke.Thickness = 2
+    stroke.Color = color
+    stroke.Transparency = 0.3
+
+    local label = Instance_new("TextLabel", frame)
+    label.Size = UDim2_new(1, -20, 1, 0)
+    label.Position = UDim2_new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.TextColor3 = uiText
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    frame:TweenPosition(UDim2_new(0, 20, 1, -100), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.4, true)
+    
+    task_delay(3, function()
+        pcall(function()
+            frame:TweenPosition(UDim2_new(0, -260, 1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quart, 0.4, true)
+            task_wait(0.5)
+            screenGui:Destroy()
+        end)
+    end)
+end
+
+-- ======= KEY GUI =======
+local function showKeyGUI()
+    local screenGui = Instance_new("ScreenGui")
+    screenGui.Name = "KFS_UI"
+    screenGui.Parent = CoreGui
+
+    local frame = Instance_new("Frame")
+    frame.Size = UDim2_new(0, 350, 0, 250)
+    frame.Position = UDim2_new(0.5, -175, 0.5, -125)
+    frame.BackgroundColor3 = uiBG
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance_new("UIStroke", frame).Color = uiAccent
+
+    local title = Instance_new("TextLabel")
+    title.Size = UDim2_new(1, 0, 0, 40)
+    title.Text = "🛡️ KFS SCRIPT EDITION"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextColor3 = uiAccent
+    title.BackgroundTransparency = 1
+    title.Parent = frame
+
+    local desc = Instance_new("TextLabel")
+    desc.Size = UDim2_new(1, -40, 0, 40)
+    desc.Position = UDim2_new(0, 20, 0, 50)
+    desc.Text = "Entre no Discord para comprar sua Key única:\n" .. discordLink
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 13
+    desc.TextColor3 = uiText
+    desc.BackgroundTransparency = 1
+    desc.Parent = frame
+
+    local hwidBox = Instance_new("TextBox")
+    hwidBox.Size = UDim2_new(1, -60, 0, 35)
+    hwidBox.Position = UDim2_new(0, 30, 0, 100)
+    hwidBox.BackgroundColor3 = uiCard
+    hwidBox.Text = "SEU ID: " .. userId
+    hwidBox.TextColor3 = Color3_fromRGB(150, 150, 150)
+    hwidBox.TextEditable = false
+    hwidBox.ClearTextOnFocus = false
+    hwidBox.Font = Enum.Font.Code
+    hwidBox.TextSize = 14
+    hwidBox.Parent = frame
+    Instance_new("UICorner", hwidBox)
+
+    local keyBox = Instance_new("TextBox")
+    keyBox.Size = UDim2_new(1, -60, 0, 35)
+    keyBox.Position = UDim2_new(0, 30, 0, 145)
+    keyBox.BackgroundColor3 = uiCard
+    keyBox.PlaceholderText = "Cole sua Key aqui..."
+    keyBox.Text = ""
+    keyBox.TextColor3 = uiText
+    keyBox.Font = Enum.Font.Gotham
+    keyBox.TextSize = 14
+    keyBox.Parent = frame
+    Instance_new("UICorner", keyBox)
+
+    local btnDiscord = Instance_new("TextButton")
+    btnDiscord.Size = UDim2_new(0.45, 0, 0, 35)
+    btnDiscord.Position = UDim2_new(0, 30, 0, 195)
+    btnDiscord.BackgroundColor3 = Color3_fromRGB(88, 101, 242)
+    btnDiscord.Text = "COPIAR DISCORD"
+    btnDiscord.Font = Enum.Font.GothamBold
+    btnDiscord.TextColor3 = uiText
+    btnDiscord.TextSize = 12
+    btnDiscord.Parent = frame
+    Instance_new("UICorner", btnDiscord)
+
+    local btnVerify = Instance_new("TextButton")
+    btnVerify.Size = UDim2_new(0.45, 0, 0, 35)
+    btnVerify.Position = UDim2_new(0.55, -30, 0, 195)
+    btnVerify.BackgroundColor3 = uiAccent
+    btnVerify.Text = "VERIFICAR KEY"
+    btnVerify.Font = Enum.Font.GothamBold
+    btnVerify.TextColor3 = uiText
+    btnVerify.TextSize = 12
+    btnVerify.Parent = frame
+    Instance_new("UICorner", btnVerify)
+
+    btnDiscord.MouseButton1Click:Connect(function()
+        if setclipboard then setclipboard(discordLink) end
+        btnDiscord.Text = "COPIADO!"
+        task_wait(1)
+        btnDiscord.Text = "COPIAR DISCORD"
+    end)
+
+    btnVerify.MouseButton1Click:Connect(function()
+        local inputKey = keyBox.Text
+        if validKeys[inputKey] then
+            if writefile then writefile(authFile, inputKey) end
+            screenGui:Destroy()
+            isUnlocked = true
+            createNotification("KEY VÁLIDA! BEM-VINDO.", Color3_fromRGB(50, 255, 50))
+            task_wait(0.5)
+            mainScript()
+        else
+            createNotification("KEY INVÁLIDA!", Color3_fromRGB(255, 50, 50))
+        end
+    end)
+end
+
+-- ======= MAIN SCRIPT WRAPPER =======
+function mainScript()
+    if not isUnlocked then return end
+    
+    -- ======= NPC CACHE (OPTIMIZATION) =======
+    local npcCache = {}
+    task_spawn(function()
+        while getgenv().KFSHUB_Loaded do
+            local tempNPCs = {}
+            local allDescendants = Workspace:GetDescendants()
+            local count = 0
+            for i = 1, #allDescendants do
+                if not getgenv().KFSHUB_Loaded then return end
+                local obj = allDescendants[i]
+                if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
+                    table_insert(tempNPCs, obj)
+                end
+                count = count + 1
+                if count >= 150 then count = 0 task_wait() end
+            end
+            npcCache = tempNPCs
+            task_wait(10)
+        end
+    end)
+
+    -- ======= CHARACTER PARTS CACHE =======
+    local function updateCharCache()
+        characterParts = {}
+        local char = player.Character
+        if char then
+            local descendants = char:GetDescendants()
+            for i = 1, #descendants do
+                local part = descendants[i]
+                if part:IsA("BasePart") then table_insert(characterParts, part) end
+            end
+        end
+    end
+    connect(player.CharacterAdded, function() task_wait(1) updateCharCache() end)
+    updateCharCache()
+
+    -- ======= GUI CREATION =======
+    local screenGui = Instance_new("ScreenGui")
+    screenGui.Name = "KFS_UI"
+    screenGui.ResetOnSpawn = false
+    screenGui.DisplayOrder = 999
+    screenGui.Parent = CoreGui
+
+    local panel = Instance_new("Frame")
+    panel.Name = "MainPanel"
+    panel.Size = UDim2_new(0, 320, 0, 780)
+    panel.Position = UDim2_new(1, -340, 0, 20)
+    panel.BackgroundColor3 = uiBG
+    panel.BorderSizePixel = 0
+    panel.Parent = screenGui
+    Instance_new("UICorner", panel).CornerRadius = UDim.new(0, 15)
+    
+    local panelStroke = Instance_new("UIStroke", panel)
+    panelStroke.Color = uiAccent
+    panelStroke.Thickness = 2
+    panelStroke.Transparency = 0.4
+
+    local title = Instance_new("TextLabel")
+    title.Size = UDim2_new(1, -40, 0, 50)
+    title.Position = UDim2_new(0, 20, 0, 10)
+    title.Text = "🛡️ KFS SCRIPT EDITION"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 20
+    title.TextColor3 = uiAccent
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = panel
+
+    local statusFrame = Instance_new("Frame")
+    statusFrame.Size = UDim2_new(1, -30, 0, 160)
+    statusFrame.Position = UDim2_new(0, 15, 0, 65)
+    statusFrame.BackgroundColor3 = uiCard
+    statusFrame.BorderSizePixel = 0
+    statusFrame.Parent = panel
+    Instance_new("UICorner", statusFrame).CornerRadius = UDim.new(0, 10)
+
+    local function createStatusLabel(pos, parent)
+        local label = Instance_new("TextLabel")
+        label.Size = UDim2_new(1, -20, 0, 20)
+        label.Position = pos
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 13
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = parent
+        return label
+    end
+
+    local statusESP = createStatusLabel(UDim2_new(0, 12, 0, 10), statusFrame)
+    local statusFly = createStatusLabel(UDim2_new(0, 12, 0, 35), statusFrame)
+    local statusNoclip = createStatusLabel(UDim2_new(0, 12, 0, 60), statusFrame)
+    local statusAimbot = createStatusLabel(UDim2_new(0, 12, 0, 85), statusFrame)
+    local statusHitbox = createStatusLabel(UDim2_new(0, 12, 0, 110), statusFrame)
+    local statusAimTarget = createStatusLabel(UDim2_new(0, 12, 0, 135), statusFrame)
+
+    local espBtn, flyBtn, noclipBtn, aimbotBtn, aimPartBtn, aimTypeBtn, hitboxBtn
+
+    local function updateUI()
+        statusESP.Text = "👁️ ESP: " .. (espEnabled and "ON" or "OFF")
+        statusESP.TextColor3 = espEnabled and Color3_fromRGB(50,255,100) or Color3_fromRGB(150,150,150)
+        statusFly.Text = "✈️ FLY: " .. (flyEnabled and "ON" or "OFF")
+        statusFly.TextColor3 = flyEnabled and Color3_fromRGB(0,200,255) or Color3_fromRGB(150,150,150)
+        statusNoclip.Text = "👻 NOCLIP: " .. (noclipEnabled and "ON" or "OFF")
+        statusNoclip.TextColor3 = noclipEnabled and Color3_fromRGB(255,100,100) or Color3_fromRGB(150,150,150)
+        statusAimbot.Text = "🎯 AIMBOT: " .. (aimbotEnabled and "ON" or "OFF")
+        statusAimbot.TextColor3 = aimbotEnabled and Color3_fromRGB(255,50,50) or Color3_fromRGB(150,150,150)
+        statusHitbox.Text = "📦 HITBOX: " .. (hitboxEnabled and "ON" or "OFF")
+        statusHitbox.TextColor3 = hitboxEnabled and Color3_fromRGB(255,180,50) or Color3_fromRGB(150,150,150)
+        statusAimTarget.Text = string_format("🎯 ALVO: %s | TIPO: %s", aimbotTargetPart == "HumanoidRootPart" and "TORSO" or "CABEÇA", aimbotTargetType)
+        
+        if espBtn then espBtn.Text = "VISUAIS (ESP): " .. (espEnabled and "ON" or "OFF") end
+        if flyBtn then flyBtn.Text = "VOAR (FLY): " .. (flyEnabled and "ON" or "OFF") end
+        if noclipBtn then noclipBtn.Text = "ATRAVESSAR (NOCLIP): " .. (noclipEnabled and "ON" or "OFF") end
+        if aimbotBtn then aimbotBtn.Text = "COMBATE (AIMBOT): " .. (aimbotEnabled and "ON" or "OFF") end
+        if aimPartBtn then aimPartBtn.Text = "PARTE DO ALVO: " .. string_upper(aimbotTargetPart == "HumanoidRootPart" and "TORSO" or "CABEÇA") end
+        if aimTypeBtn then aimTypeBtn.Text = "TIPO DE ALVO: " .. string_upper(aimbotTargetType) end
+        if hitboxBtn then hitboxBtn.Text = "HITBOX AUMENTADA: " .. (hitboxEnabled and "ON" or "OFF") end
+    end
+
+    -- ======= TARGETING LOGIC =======
+    local function isSpecialBot(char)
+        if not char then return false end
+        local name = char.Name:lower()
+        if name:find("ceo") or name:find("drop") or name:find("boss") or name:find("guard") or name:find("mansion") or name:find("police") or name:find("collector") or name:find("agent") then
+            return true
+        end
+        return false
+    end
+
+    local function isValidTarget(char, isAimbot)
+        if not (char and char.Parent and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0) then return false end
+        local tp = Players:GetPlayerFromCharacter(char)
+        if tp then
+            if tp == player then return false end
+            if teamCheck then if player.Team and tp.Team and player.Team == tp.Team then return false end end
+            if isAimbot and aimbotTargetType == "Bots" then return false end
+            return true
+        end
+        if not isAimbot then return false end
+        if aimbotTargetType == "Players" then return false end
+        return isSpecialBot(char) or (aimbotTargetType == "Bots")
+    end
+
+    -- ======= UI HELPERS =======
+    local function handleSlider(input, bar, min, max, callback)
+        local sizeX = math_clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        local value = min + (max - min) * sizeX
+        callback(value, sizeX)
+    end
+
+    local function createSlider(text, pos, min, max, current, color, parent)
+        local label = Instance_new("TextLabel")
+        label.Size = UDim2_new(1, -30, 0, 20)
+        label.Position = pos
+        label.BackgroundTransparency = 1
+        label.Text = text .. ": " .. tostring(math_floor(current))
+        label.Font = Enum.Font.GothamSemibold
+        label.TextSize = 13
+        label.TextColor3 = uiText
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = parent
+
+        local bar = Instance_new("Frame")
+        bar.Size = UDim2_new(0, 260, 0, 10)
+        bar.Position = pos + UDim2_new(0, 0, 0, 25)
+        bar.BackgroundColor3 = Color3_fromRGB(30, 30, 35)
+        bar.BorderSizePixel = 0
+        bar.Parent = parent
+        Instance_new("UICorner", bar)
+
+        local fill = Instance_new("Frame")
+        fill.Size = UDim2_new((current - min) / (max - min), 0, 1, 0)
+        fill.BackgroundColor3 = color
+        fill.BorderSizePixel = 0
+        fill.Parent = bar
+        Instance_new("UICorner", fill)
+
+        return label, bar, fill
+    end
+
+    local hitboxLabel, hitboxBar, hitboxFill = createSlider("Tamanho Hitbox", UDim2_new(0, 15, 0, 240), hitboxMin, hitboxMax, hitboxSize, Color3_fromRGB(255, 180, 50), panel)
+    local espRangeLabel, espRangeBar, espRangeFill = createSlider("Alcance ESP", UDim2_new(0, 15, 0, 290), espRangeMin, espRangeMax, espMaxDistance, Color3_fromRGB(50, 255, 100), panel)
+    local flySpeedLabel, flySpeedBar, flySpeedFill = createSlider("Velocidade Fly", UDim2_new(0, 15, 0, 340), flySpeedMin, flySpeedMax, flySpeed, Color3_fromRGB(0, 200, 255), panel)
+    local transLabel, transBar, transFill = createSlider("Opacidade Hitbox", UDim2_new(0, 15, 0, 390), 0, 1, hitboxTransparency, uiAccent, panel)
+
+    local function createButton(text, position, callback)
+        local btn = Instance_new("TextButton")
+        btn.Size = UDim2_new(0, 260, 0, 35)
+        btn.Position = position
+        btn.BackgroundColor3 = uiCard
+        btn.Text = text
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 13
+        btn.TextColor3 = uiText
+        btn.Parent = panel
+        Instance_new("UICorner", btn)
+        btn.MouseButton1Click:Connect(function() callback() updateUI() end)
+        return btn
+    end
+
+    -- ======= ACTIONS =======
+    local function toggleNoclip()
+        noclipEnabled = not noclipEnabled
+        if not noclipEnabled then
+            task_wait(0.05)
+            for _, part in ipairs(characterParts) do if part and part.Parent then part.CanCollide = true end end
+        else updateCharCache() end
+        createNotification("Noclip: " .. (noclipEnabled and "LIGADO" or "DESLIGADO"))
+    end
+
+    local function toggleAimbot()
+        aimbotEnabled = not aimbotEnabled
+        currentAimbotTarget = nil
+        createNotification("Aimbot: " .. (aimbotEnabled and "LIGADO" or "DESLIGADO"))
+    end
+
+    local function toggleFly()
+        flyEnabled = not flyEnabled
+        if flyEnabled then
+            local char = player.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    bodyVelocity = Instance_new("BodyVelocity")
+                    bodyVelocity.MaxForce = Vector3_new(1e6, 1e6, 1e6)
+                    bodyVelocity.Velocity = Vector3_zero
+                    bodyVelocity.Parent = hrp
+                    bodyGyro = Instance_new("BodyGyro")
+                    bodyGyro.MaxTorque = Vector3_new(1e6, 1e6, 1e6)
+                    bodyGyro.P = 15000
+                    bodyGyro.Parent = hrp
+                end
+            end
+        else
+            if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+            if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+        end
+        createNotification("Fly: " .. (flyEnabled and "LIGADO" or "DESLIGADO"))
+    end
+
+    espBtn = createButton("VISUAIS (ESP): ON", UDim2_new(0, 15, 0, 440), function() espEnabled = not espEnabled end)
+    flyBtn = createButton("VOAR (FLY): OFF", UDim2_new(0, 15, 0, 480), toggleFly)
+    noclipBtn = createButton("ATRAVESSAR (NOCLIP): OFF", UDim2_new(0, 15, 0, 520), toggleNoclip)
+    aimbotBtn = createButton("COMBATE (AIMBOT): OFF", UDim2_new(0, 15, 0, 560), toggleAimbot)
+    aimPartBtn = createButton("PARTE DO ALVO: CABEÇA", UDim2_new(0, 15, 0, 600), function() aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head" end)
+    aimTypeBtn = createButton("TIPO DE ALVO: TODOS", UDim2_new(0, 15, 0, 640), function() 
+        if aimbotTargetType == "All" then aimbotTargetType = "Players"
+        elseif aimbotTargetType == "Players" then aimbotTargetType = "Bots"
+        else aimbotTargetType = "All" end
+    end)
+    hitboxBtn = createButton("HITBOX AUMENTADA: OFF", UDim2_new(0, 15, 0, 680), function() 
+        hitboxEnabled = not hitboxEnabled
+        if not hitboxEnabled then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Character then local hrp = p.Character:FindFirstChild("HumanoidRootPart") if hrp then hrp.Size = Vector3_new(2, 2, 1) hrp.Transparency = 1 end end
+            end
+        end
+    end)
+
+    updateUI()
+
+    -- ======= ESP SYSTEM =======
+    local espObjects = {}
+    local function createESP(target)
+        if not target or espObjects[target] or not isValidTarget(target, false) then return end
+        local head = target:FindFirstChild("Head")
+        if not head then return end
+        local highlight = Instance_new("Highlight")
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.FillColor = Color3_fromRGB(255, 50, 50)
+        highlight.OutlineColor = Color3_fromRGB(255, 255, 255)
+        highlight.Adornee = target
+        highlight.Parent = target
+        local billboard = Instance_new("BillboardGui")
+        billboard.Adornee = head
+        billboard.AlwaysOnTop = true
+        billboard.Size = UDim2_new(0, 120, 0, 50)
+        billboard.StudsOffset = Vector3_new(0, 3, 0)
+        billboard.Parent = CoreGui
+        local nameLabel = Instance_new("TextLabel", billboard)
+        nameLabel.Size = UDim2_new(1, 0, 0.5, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = Players:GetPlayerFromCharacter(target).Name
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextSize = 12
+        nameLabel.TextColor3 = uiText
+        local distLabel = Instance_new("TextLabel", billboard)
+        distLabel.Size = UDim2_new(1, 0, 0.5, 0)
+        distLabel.Position = UDim2_new(0, 0, 0.5, 0)
+        distLabel.BackgroundTransparency = 1
+        distLabel.Font = Enum.Font.Gotham
+        distLabel.TextSize = 11
+        distLabel.TextColor3 = Color3_fromRGB(200, 200, 200)
+        espObjects[target] = {highlight = highlight, billboard = billboard, distLabel = distLabel}
+    end
+
+    task_spawn(function()
+        while getgenv().KFSHUB_Loaded do
+            if espEnabled then
+                for _, p in ipairs(Players:GetPlayers()) do if p ~= player and p.Character then createESP(p.Character) end end
+                local camPos = camera.CFrame.Position
+                local hCount = 0
+                for char, data in next, espObjects do
+                    if char.Parent and char:FindFirstChild("Head") and isValidTarget(char, false) then
+                        local dist = (char.Head.Position - camPos).Magnitude
+                        if dist <= espMaxDistance then
+                            data.billboard.Enabled = true
+                            data.distLabel.Text = math_floor(dist) .. "m"
+                            if hCount < 30 then data.highlight.Enabled = true hCount = hCount + 1 else data.highlight.Enabled = false end
+                        else data.billboard.Enabled = false data.highlight.Enabled = false end
+                    else pcall(function() data.highlight:Destroy() data.billboard:Destroy() end) espObjects[char] = nil end
+                end
+            else for char, data in next, espObjects do pcall(function() data.highlight:Destroy() data.billboard:Destroy() end) end espObjects = {} end
+            task_wait(0.2)
+        end
+    end)
+
+    -- ======= AIMBOT =======
+    local function getAimbotTarget()
+        local char = player.Character
+        if not char then return nil end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return nil end
+        local myPos = hrp.Position
+        if currentAimbotTarget and isValidTarget(currentAimbotTarget, true) then
+            local tp = currentAimbotTarget:FindFirstChild(aimbotTargetPart) or currentAimbotTarget:FindFirstChild("HumanoidRootPart")
+            if tp and (tp.Position - myPos).Magnitude <= aimbotMaxDistance then return currentAimbotTarget end
+        end
+        local nearest, shortestMouseDistance = nil, fovRadius
+        local camSize = camera.ViewportSize
+        local center = Vector2_new(camSize.X / 2, camSize.Y / 2)
+        local function check(targetChar, isAim)
+            if isValidTarget(targetChar, isAim) then
+                local tp = targetChar:FindFirstChild(aimbotTargetPart) or targetChar:FindFirstChild("HumanoidRootPart")
+                if tp then
+                    local vector, onScreen = camera:WorldToViewportPoint(tp.Position)
+                    if onScreen then
+                        local mouseDist = (Vector2_new(vector.X, vector.Y) - center).Magnitude
+                        if mouseDist < shortestMouseDistance then
+                            if (tp.Position - myPos).Magnitude <= aimbotMaxDistance then shortestMouseDistance = mouseDist nearest = targetChar end
+                        end
+                    end
+                end
+            end
+        end
+        if aimbotTargetType ~= "Bots" then for _, p in ipairs(Players:GetPlayers()) do if p ~= player and p.Character then check(p.Character, true) end end end
+        if aimbotTargetType ~= "Players" then for _, bot in ipairs(npcCache) do check(bot, true) end end
+        return nearest
+    end
+
+    -- ======= LOOPS & INPUTS =======
+    connect(RunService.RenderStepped, function()
+        if flyEnabled and bodyVelocity and bodyGyro then
+            local moveDir = Vector3_zero
+            local camCF = camera.CFrame
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3_new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3_new(0, 1, 0) end
+            bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3_zero
+            bodyGyro.CFrame = camCF
+        end
+        if aimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            currentAimbotTarget = getAimbotTarget()
+            if currentAimbotTarget then
+                local tp = currentAimbotTarget:FindFirstChild(aimbotTargetPart) or currentAimbotTarget:FindFirstChild("HumanoidRootPart")
+                if tp then camera.CFrame = CFrame_new(camera.CFrame.Position, tp.Position) end
+            end
+        else currentAimbotTarget = nil end
+    end)
+
+    connect(RunService.Stepped, function()
+        if noclipEnabled then for _, part in ipairs(characterParts) do if part and part.Parent then part.CanCollide = false end end end
+    end)
+
+    task_spawn(function()
+        while getgenv().KFSHUB_Loaded do
+            if hitboxEnabled then
+                local hSize = Vector3_new(hitboxSize, hitboxSize, hitboxSize)
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= player and p.Character and isValidTarget(p.Character, false) then
+                        local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then hrp.Size = hSize hrp.Transparency = hitboxTransparency hrp.CanCollide = false end
+                    end
+                end
+            end
+            task_wait(1)
+        end
+    end)
+
+    -- Sliders
+    hitboxBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = "hitbox" end end)
+    espRangeBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = "esp" end end)
+    flySpeedBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = "fly" end end)
+    transBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = "trans" end end)
+    connect(UserInputService.InputChanged, function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            if dragging == "hitbox" then
+                handleSlider(input, hitboxBar, hitboxMin, hitboxMax, function(v, p) 
+                    hitboxSize = math_floor(v) hitboxLabel.Text = "Tamanho Hitbox: " .. hitboxSize hitboxFill.Size = UDim2_new(p, 0, 1, 0)
+                end)
+            elseif dragging == "esp" then
+                handleSlider(input, espRangeBar, espRangeMin, espRangeMax, function(v, p) 
+                    espMaxDistance = math_floor(v) espRangeLabel.Text = "Alcance ESP: " .. espMaxDistance .. "m" espRangeFill.Size = UDim2_new(p, 0, 1, 0)
+                end)
+            elseif dragging == "fly" then
+                handleSlider(input, flySpeedBar, flySpeedMin, flySpeedMax, function(v, p) 
+                    flySpeed = math_floor(v) flySpeedLabel.Text = "Velocidade Fly: " .. flySpeed flySpeedFill.Size = UDim2_new(p, 0, 1, 0)
+                end)
+            elseif dragging == "trans" then
+                handleSlider(input, transBar, 0, 1, function(v, p) 
+                    hitboxTransparency = math_floor(v * 100) / 100 transLabel.Text = "Opacidade Hitbox: " .. math_floor(hitboxTransparency * 100) .. "%" transFill.Size = UDim2_new(p, 0, 1, 0)
+                end)
+            end
+        end
+    end)
+    connect(UserInputService.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = nil end end)
+
+    connect(UserInputService.InputBegan, function(input, gameProcessed)
+        if gameProcessed then return end
+        local key = input.KeyCode
+        if key == Enum.KeyCode.U then toggleNoclip() updateUI()
+        elseif key == Enum.KeyCode.G then toggleAimbot() updateUI()
+        elseif key == Enum.KeyCode.F then toggleFly() updateUI()
+        elseif key == Enum.KeyCode.Y then guiVisible = not guiVisible panel.Visible = guiVisible end
+    end)
+
+    createNotification("KFS SCRIPT EDITION CARREGADO!", uiAccent)
+end
+
+-- Start
+if isUnlocked then
+    mainScript()
+else
+    showKeyGUI()
+end
