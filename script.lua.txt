@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.0 (New Tabbed UI & Redesign)
+-- Version 3.1 (Auto-Update Support)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -44,6 +44,10 @@ local userId = player.UserId
 local discordLink = "https://discord.gg/Z2UWDvS2FP"
 local authFile = "kfs_auth_v2.txt"
 
+-- ======= AUTO-UPDATE CONFIG =======
+local scriptVersion = "3.1"
+local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" -- Coloque o link do seu arquivo RAW aqui
+
 -- ======= VALID KEYS LIST (50 KEYS) =======
 local validKeys = {
     ["KFS-7A9X2P-4M8Q1Z"] = true, ["KFS-X3K8L2-9P1D4F"] = true, ["KFS-2ZQ9W1-8L4N6A"] = true, ["KFS-M8P3X9-1Q7Z2K"] = true, ["KFS-4L2D9F-7X1A8Q"] = true,
@@ -85,9 +89,9 @@ local fovRadius = 150
 local espMaxDistance = 5000
 local espRangeMin, espRangeMax = 2000, 10000
 
--- UI Colors (Black & Delicate Blue)
+-- UI Colors (Black & Blue)
 local uiAccent = Color3_fromRGB(0, 170, 255)
-local uiBG = Color3_fromRGB(5, 5, 5) -- Pure Black
+local uiBG = Color3_fromRGB(5, 5, 5)
 local uiCard = Color3_fromRGB(12, 12, 12)
 local uiText = Color3_fromRGB(255, 255, 255)
 local uiDimText = Color3_fromRGB(180, 180, 180)
@@ -104,7 +108,6 @@ local currentAimbotTarget = nil
 local aimbotTargetPart = "Head"
 local aimbotTargetType = "All"
 local dragging = nil
-local currentTab = "Movement"
 
 -- Variables for body movement (Fly)
 local bodyVelocity, bodyGyro = nil, nil
@@ -132,7 +135,6 @@ getgenv().KFSHUB_Unload = function()
     if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
     if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
     
-    -- Reset hitboxes
     local plrs = Players:GetPlayers()
     for _, p in ipairs(plrs) do
         if p.Character then
@@ -183,6 +185,28 @@ local function createNotification(text, color)
     end)
 end
 
+-- ======= AUTO-UPDATE LOGIC =======
+task_spawn(function()
+    while getgenv().KFSHUB_Loaded do
+        task_wait(300) -- Verifica a cada 5 minutos
+        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
+            local success, result = pcall(function()
+                return game:HttpGet(githubRawURL)
+            end)
+            if success and result then
+                -- Procura a versão no comentário do topo: "-- Version X.X"
+                local remoteVersion = result:match('-- Version ([%d%.]+)')
+                if remoteVersion and remoteVersion ~= scriptVersion then
+                    createNotification("NOVA ATUALIZAÇÃO ENCONTRADA! ATUALIZANDO...", Color3_fromRGB(255, 200, 0))
+                    task_wait(2)
+                    getgenv().KFSHUB_Unload()
+                    loadstring(result)()
+                end
+            end
+        end
+    end
+end)
+
 -- ======= KEY GUI =======
 local function showKeyGUI()
     local screenGui = Instance_new("ScreenGui")
@@ -195,7 +219,7 @@ local function showKeyGUI()
     frame.BackgroundColor3 = uiBG
     frame.BorderSizePixel = 0
     frame.Parent = screenGui
-    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 0) -- Square
+    Instance_new("UICorner", frame).CornerRadius = UDim.new(0, 0)
     local stroke = Instance_new("UIStroke", frame)
     stroke.Color = uiAccent
     stroke.Thickness = 2
@@ -336,12 +360,12 @@ function mainScript()
 
     local mainFrame = Instance_new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2_new(0, 500, 0, 400) -- Square-ish
+    mainFrame.Size = UDim2_new(0, 500, 0, 400)
     mainFrame.Position = UDim2_new(0.5, -250, 0.5, -200)
     mainFrame.BackgroundColor3 = uiBG
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
-    Instance_new("UICorner", mainFrame).CornerRadius = UDim.new(0, 0) -- Square
+    Instance_new("UICorner", mainFrame).CornerRadius = UDim.new(0, 0)
     local mainStroke = Instance_new("UIStroke", mainFrame)
     mainStroke.Color = uiAccent
     mainStroke.Thickness = 2
@@ -424,9 +448,7 @@ function mainScript()
         btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.Parent = parent
         Instance_new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-        btn.MouseButton1Click:Connect(function()
-            callback(btn)
-        end)
+        btn.MouseButton1Click:Connect(function() callback(btn) end)
         return btn
     end
 
@@ -435,7 +457,6 @@ function mainScript()
         frame.Size = UDim2_new(1, 0, 0, 50)
         frame.BackgroundTransparency = 1
         frame.Parent = parent
-
         local label = Instance_new("TextLabel")
         label.Size = UDim2_new(1, 0, 0, 20)
         label.Text = name .. ": " .. math_floor(current)
@@ -445,7 +466,6 @@ function mainScript()
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.BackgroundTransparency = 1
         label.Parent = frame
-
         local bar = Instance_new("Frame")
         bar.Size = UDim2_new(1, 0, 0, 6)
         bar.Position = UDim2_new(0, 0, 0, 25)
@@ -453,14 +473,12 @@ function mainScript()
         bar.BorderSizePixel = 0
         bar.Parent = frame
         Instance_new("UICorner", bar)
-
         local fill = Instance_new("Frame")
         fill.Size = UDim2_new((current - min) / (max - min), 0, 1, 0)
         fill.BackgroundColor3 = uiAccent
         fill.BorderSizePixel = 0
         fill.Parent = bar
         Instance_new("UICorner", fill)
-
         bar.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 dragging = {bar, fill, label, min, max, name, callback}
@@ -472,36 +490,19 @@ function mainScript()
     -- Tab Selection
     local mBtn = createTabBtn("MOVIMENTAÇÃO", 70, sidebar)
     local cBtn = createTabBtn("COMBATE", 120, sidebar)
-
     mBtn.MouseButton1Click:Connect(function()
-        movementTab.Visible = true
-        combatTab.Visible = false
-        mBtn.BackgroundColor3 = uiAccent
-        mBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
-        cBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
-        cBtn.TextColor3 = uiText
+        movementTab.Visible = true combatTab.Visible = false
+        mBtn.BackgroundColor3 = uiAccent mBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
+        cBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20) cBtn.TextColor3 = uiText
     end)
-
     cBtn.MouseButton1Click:Connect(function()
-        movementTab.Visible = false
-        combatTab.Visible = true
-        cBtn.BackgroundColor3 = uiAccent
-        cBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
-        mBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
-        mBtn.TextColor3 = uiText
+        movementTab.Visible = false combatTab.Visible = true
+        cBtn.BackgroundColor3 = uiAccent cBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
+        mBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20) mBtn.TextColor3 = uiText
     end)
+    mBtn.BackgroundColor3 = uiAccent mBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
 
-    -- Default Selection
-    mBtn.BackgroundColor3 = uiAccent
-    mBtn.TextColor3 = Color3_fromRGB(0, 0, 0)
-
-    -- Layouts
-    local mLayout = Instance_new("UIListLayout", movementTab)
-    mLayout.Padding = UDim.new(0, 10)
-    local cLayout = Instance_new("UIListLayout", combatTab)
-    cLayout.Padding = UDim.new(0, 10)
-
-    -- ======= MOVEMENT TAB CONTENT =======
+    -- ======= CONTENT =======
     createSectionTitle("VISUAIS (ESP)", movementTab)
     local espTgl = createToggle("ESP SYSTEM", movementTab, function(b)
         espEnabled = not espEnabled
@@ -510,7 +511,6 @@ function mainScript()
     end)
     espTgl.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
     espTgl.TextColor3 = espEnabled and uiAccent or uiDimText
-
     createSlider("ALCANCE ESP", espRangeMin, espRangeMax, espMaxDistance, movementTab, function(v) espMaxDistance = v end)
 
     createSectionTitle("MOVIMENTO", movementTab)
@@ -532,7 +532,6 @@ function mainScript()
             if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
         end
     end)
-
     createSlider("VELOCIDADE FLY", flySpeedMin, flySpeedMax, flySpeed, movementTab, function(v) flySpeed = v end)
 
     local noclipTgl = createToggle("NOCLIP (PAREDES)", movementTab, function(b)
@@ -545,7 +544,6 @@ function mainScript()
         else updateCharCache() end
     end)
 
-    -- ======= COMBAT TAB CONTENT =======
     createSectionTitle("COMBATE (AIMBOT)", combatTab)
     local aimTgl = createToggle("AIMBOT SYSTEM", combatTab, function(b)
         aimbotEnabled = not aimbotEnabled
@@ -553,13 +551,11 @@ function mainScript()
         b.TextColor3 = aimbotEnabled and uiAccent or uiDimText
         currentAimbotTarget = nil
     end)
-
-    local aimPartTgl = createToggle("PARTE: CABEÇA", combatTab, function(b)
+    createToggle("PARTE: CABEÇA", combatTab, function(b)
         aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head"
         b.Text = "  PARTE: " .. (aimbotTargetPart == "Head" and "CABEÇA" or "TORSO")
     end)
-
-    local aimTypeTgl = createToggle("ALVOS: TODOS", combatTab, function(b)
+    createToggle("ALVOS: TODOS", combatTab, function(b)
         if aimbotTargetType == "All" then aimbotTargetType = "Players"
         elseif aimbotTargetType == "Players" then aimbotTargetType = "Bots"
         else aimbotTargetType = "All" end
@@ -580,7 +576,6 @@ function mainScript()
             end
         end
     end)
-
     createSlider("TAMANHO HITBOX", hitboxMin, hitboxMax, hitboxSize, combatTab, function(v) hitboxSize = v end)
     createSlider("TRANSPARÊNCIA", 0, 1, hitboxTransparency, combatTab, function(v) hitboxTransparency = v end)
 
@@ -615,32 +610,21 @@ function mainScript()
         local head = target:FindFirstChild("Head")
         if not head then return end
         local highlight = Instance_new("Highlight")
-        highlight.FillTransparency = 0.5
-        highlight.OutlineTransparency = 0
-        highlight.FillColor = Color3_fromRGB(255, 50, 50)
-        highlight.OutlineColor = Color3_fromRGB(255, 255, 255)
-        highlight.Adornee = target
-        highlight.Parent = target
+        highlight.FillTransparency = 0.5 highlight.OutlineTransparency = 0
+        highlight.FillColor = Color3_fromRGB(255, 50, 50) highlight.OutlineColor = Color3_fromRGB(255, 255, 255)
+        highlight.Adornee = target highlight.Parent = target
         local billboard = Instance_new("BillboardGui")
-        billboard.Adornee = head
-        billboard.AlwaysOnTop = true
-        billboard.Size = UDim2_new(0, 120, 0, 50)
-        billboard.StudsOffset = Vector3_new(0, 3, 0)
+        billboard.Adornee = head billboard.AlwaysOnTop = true
+        billboard.Size = UDim2_new(0, 120, 0, 50) billboard.StudsOffset = Vector3_new(0, 3, 0)
         billboard.Parent = CoreGui
         local nameLabel = Instance_new("TextLabel", billboard)
-        nameLabel.Size = UDim2_new(1, 0, 0.5, 0)
-        nameLabel.BackgroundTransparency = 1
+        nameLabel.Size = UDim2_new(1, 0, 0.5, 0) nameLabel.BackgroundTransparency = 1
         nameLabel.Text = Players:GetPlayerFromCharacter(target).Name
-        nameLabel.Font = Enum.Font.GothamBold
-        nameLabel.TextSize = 12
-        nameLabel.TextColor3 = uiText
+        nameLabel.Font = Enum.Font.GothamBold nameLabel.TextSize = 12 nameLabel.TextColor3 = uiText
         local distLabel = Instance_new("TextLabel", billboard)
-        distLabel.Size = UDim2_new(1, 0, 0.5, 0)
-        distLabel.Position = UDim2_new(0, 0, 0.5, 0)
-        distLabel.BackgroundTransparency = 1
-        distLabel.Font = Enum.Font.GothamBold
-        distLabel.TextSize = 11
-        distLabel.TextColor3 = uiDimText
+        distLabel.Size = UDim2_new(1, 0, 0.5, 0) distLabel.Position = UDim2_new(0, 0, 0.5, 0)
+        distLabel.BackgroundTransparency = 1 distLabel.Font = Enum.Font.GothamBold
+        distLabel.TextSize = 11 distLabel.TextColor3 = uiDimText
         espObjects[target] = {highlight = highlight, billboard = billboard, distLabel = distLabel}
     end
 
@@ -654,8 +638,7 @@ function mainScript()
                     if char.Parent and char:FindFirstChild("Head") and isValidTarget(char, false) then
                         local dist = (char.Head.Position - camPos).Magnitude
                         if dist <= espMaxDistance then
-                            data.billboard.Enabled = true
-                            data.distLabel.Text = math_floor(dist) .. "m"
+                            data.billboard.Enabled = true data.distLabel.Text = math_floor(dist) .. "m"
                             if hCount < 30 then data.highlight.Enabled = true hCount = hCount + 1 else data.highlight.Enabled = false end
                         else data.billboard.Enabled = false data.highlight.Enabled = false end
                     else pcall(function() data.highlight:Destroy() data.billboard:Destroy() end) espObjects[char] = nil end
@@ -716,26 +699,18 @@ function mainScript()
                 if tp then camera.CFrame = CFrame_new(camera.CFrame.Position, tp.Position) end
             end
         else currentAimbotTarget = nil end
-        
-        -- Handle Drags
         if dragging then
             local bar, fill, label, min, max, name, callback = unpack(dragging)
             local mousePos = UserInputService:GetMouseLocation().X
             local relPos = math_clamp((mousePos - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
             local val = min + (max - min) * relPos
-            fill.Size = UDim2_new(relPos, 0, 1, 0)
-            label.Text = name .. ": " .. math_floor(val)
+            fill.Size = UDim2_new(relPos, 0, 1, 0) label.Text = name .. ": " .. math_floor(val)
             callback(val)
         end
     end)
 
-    connect(UserInputService.InputEnded, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = nil end
-    end)
-
-    connect(RunService.Stepped, function()
-        if noclipEnabled then for _, part in ipairs(characterParts) do if part and part.Parent then part.CanCollide = false end end end
-    end)
+    connect(UserInputService.InputEnded, function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = nil end end)
+    connect(RunService.Stepped, function() if noclipEnabled then for _, part in ipairs(characterParts) do if part and part.Parent then part.CanCollide = false end end end end)
 
     task_spawn(function()
         while getgenv().KFSHUB_Loaded do
@@ -755,8 +730,7 @@ function mainScript()
 
     connect(UserInputService.InputBegan, function(input, gameProcessed)
         if gameProcessed then return end
-        local key = input.KeyCode
-        if key == Enum.KeyCode.Y then guiVisible = not guiVisible mainFrame.Visible = guiVisible end
+        if input.KeyCode == Enum.KeyCode.Y then guiVisible = not guiVisible mainFrame.Visible = guiVisible end
     end)
 
     createNotification("KFS HUB CARREGADO!", uiAccent)
