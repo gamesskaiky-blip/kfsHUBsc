@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.9 (ESP Keybind T)
+-- Version 4.0 (Top Bar Dragging & Slider Fix)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.9"
+local scriptVersion = "4.0"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -373,26 +373,8 @@ getgenv().KFSHUB_MainScript = function()
     mainStroke.Thickness = 1.5
     mainStroke.Transparency = 0.5
     
-    -- Dragging Logic
+    -- Dragging Logic (RESTRITO À TOP BAR)
     local dragStart, startPos, draggingFrame
-    mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingFrame = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
-        end
-    end)
-    connect(UserInputService.InputChanged, function(input)
-        if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            mainFrame.Position = UDim2_new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    connect(UserInputService.InputEnded, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingFrame = false
-        end
-    end)
     
     local bgImg = Instance_new("ImageLabel")
     bgImg.Size = UDim2_new(1, 0, 1, 0)
@@ -422,6 +404,30 @@ getgenv().KFSHUB_MainScript = function()
     local topBarPadding = Instance_new("UIPadding", topBar)
     topBarPadding.PaddingLeft = UDim.new(0, 10)
     topBarPadding.PaddingRight = UDim.new(0, 10)
+
+    -- Dragging Logic Implementation
+    topBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingFrame = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            local connection
+            connection = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    draggingFrame = false
+                    connection:Disconnect()
+                end
+            end)
+        end
+    end)
+
+    connect(UserInputService.InputChanged, function(input)
+        if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2_new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
 
     -- Tab Container
     local container = Instance_new("Frame")
@@ -523,7 +529,7 @@ getgenv().KFSHUB_MainScript = function()
         return card
     end
 
-    local function createToggle(name, parent, callback)
+    local function createToggle(name, parent, default, callback)
         local frame = Instance_new("Frame")
         frame.Size = UDim2_new(1, 0, 0, 30)
         frame.BackgroundTransparency = 1
@@ -544,7 +550,7 @@ getgenv().KFSHUB_MainScript = function()
         local switchBG = Instance_new("TextButton")
         switchBG.Size = UDim2_new(0, 34, 0, 18)
         switchBG.Position = UDim2_new(1, -34, 0.5, -9)
-        switchBG.BackgroundColor3 = Color3_fromRGB(45, 45, 45)
+        switchBG.BackgroundColor3 = default and uiAccent or Color3_fromRGB(45, 45, 45)
         switchBG.Text = ""
         switchBG.BorderSizePixel = 0
         switchBG.ZIndex = 5
@@ -553,14 +559,14 @@ getgenv().KFSHUB_MainScript = function()
         
         local circle = Instance_new("Frame")
         circle.Size = UDim2_new(0, 14, 0, 14)
-        circle.Position = UDim2_new(0, 2, 0.5, -7)
+        circle.Position = UDim2_new(0, default and 18 or 2, 0.5, -7)
         circle.BackgroundColor3 = Color3_fromRGB(255, 255, 255)
         circle.BorderSizePixel = 0
         circle.ZIndex = 6
         circle.Parent = switchBG
         Instance_new("UICorner", circle).CornerRadius = UDim.new(1, 0)
         
-        local state = false
+        local state = default
         local function update()
             state = not state
             circle:TweenPosition(UDim2_new(0, state and 18 or 2, 0.5, -7), "Out", "Quart", 0.2, true)
@@ -711,7 +717,7 @@ getgenv().KFSHUB_MainScript = function()
         espEnabled = not espEnabled
         createNotification("ESP: " .. (espEnabled and "ON" or "OFF"), espEnabled and uiAccent or Color3_fromRGB(255, 50, 50))
     end
-    local espSwitch = createToggle("ESP System", visualCard, toggleESP)
+    local espSwitch = createToggle("ESP System", visualCard, espEnabled, toggleESP)
     createSlider("Alcance", espRangeMin, espRangeMax, espMaxDistance, visualCard, function(v) espMaxDistance = v end)
 
     local moveCard = createSectionCard("Movimento", movementTab)
@@ -739,7 +745,7 @@ getgenv().KFSHUB_MainScript = function()
             createNotification("Fly Desativado (F)", Color3_fromRGB(255, 50, 50))
         end
     end
-    local flySwitch = createToggle("Fly Mode", moveCard, toggleFly)
+    local flySwitch = createToggle("Fly Mode", moveCard, flyEnabled, toggleFly)
     createSlider("Velocidade", flySpeedMin, flySpeedMax, flySpeed, moveCard, function(v) flySpeed = v end)
 
     local function toggleNoclip()
@@ -755,7 +761,7 @@ getgenv().KFSHUB_MainScript = function()
             createNotification("Noclip Desativado (U)", Color3_fromRGB(255, 50, 50))
         end
     end
-    local noclipSwitch = createToggle("Noclip (Paredes)", moveCard, toggleNoclip)
+    local noclipSwitch = createToggle("Noclip (Paredes)", moveCard, noclipEnabled, toggleNoclip)
 
     local aimCard = createSectionCard("Aimbot", combatTab)
     local function toggleAimbot()
@@ -767,13 +773,13 @@ getgenv().KFSHUB_MainScript = function()
             createNotification("Aimbot Desativado (G)", Color3_fromRGB(255, 50, 50))
         end
     end
-    local aimbotSwitch = createToggle("Aimbot System", aimCard, toggleAimbot)
+    local aimbotSwitch = createToggle("Aimbot System", aimCard, aimbotEnabled, toggleAimbot)
     
     local function toggleAimPart()
         aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head"
         createNotification("Parte: " .. (aimbotTargetPart == "Head" and "Cabeça" or "Torso"), uiAccent)
     end
-    createToggle("Alvo: Torso/Cabeça", aimCard, toggleAimPart)
+    createToggle("Alvo: Torso/Cabeça", aimCard, false, toggleAimPart)
 
     local function toggleAimType()
         if aimbotTargetType == "All" then aimbotTargetType = "Players"
@@ -781,7 +787,7 @@ getgenv().KFSHUB_MainScript = function()
         else aimbotTargetType = "All" end
         createNotification("Alvos: " .. aimbotTargetType, uiAccent)
     end
-    createToggle("Filtrar Alvos", aimCard, toggleAimType)
+    createToggle("Filtrar Alvos", aimCard, false, toggleAimType)
 
     local hitboxCard = createSectionCard("Hitbox", combatTab)
     local function toggleHitbox()
@@ -796,7 +802,7 @@ getgenv().KFSHUB_MainScript = function()
         end
         createNotification("Hitbox: " .. (hitboxEnabled and "ON" or "OFF"), hitboxEnabled and uiAccent or Color3_fromRGB(255, 50, 50))
     end
-    createToggle("Hitbox Aumentada", hitboxCard, toggleHitbox)
+    createToggle("Hitbox Aumentada", hitboxCard, hitboxEnabled, toggleHitbox)
     createSlider("Tamanho", hitboxMin, hitboxMax, hitboxSize, hitboxCard, function(v) hitboxSize = v end)
     createSlider("Transparência", 0, 1, hitboxTransparency, hitboxCard, function(v) hitboxTransparency = v end)
 
