@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.5 (Keybinds & Manual Update)
+-- Version 3.6 (Photo Style UI Redesign)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.5"
+local scriptVersion = "3.6"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -91,11 +91,11 @@ local espMaxDistance = 5000
 local espRangeMin, espRangeMax = 2000, 10000
 
 -- UI Colors
-local uiAccent = Color3_fromRGB(0, 170, 255)
-local uiBG = Color3_fromRGB(0, 0, 0)
-local uiCard = Color3_fromRGB(15, 15, 15)
+local uiAccent = Color3_fromRGB(255, 105, 180) -- Pink/Matcha style
+local uiBG = Color3_fromRGB(10, 10, 10)
+local uiCard = Color3_fromRGB(20, 20, 20)
 local uiText = Color3_fromRGB(255, 255, 255)
-local uiDimText = Color3_fromRGB(200, 200, 200)
+local uiDimText = Color3_fromRGB(180, 180, 180)
 
 -- State
 local isUnlocked = checkAuth()
@@ -343,13 +343,21 @@ function mainScript()
 
     local mainFrame = Instance_new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2_new(0, 550, 0, 420)
-    mainFrame.Position = UDim2_new(0.5, -275, 0.5, -210)
+    mainFrame.Size = UDim2_new(0, 520, 0, 420)
+    mainFrame.Position = UDim2_new(0.5, -260, 0.5, -210)
     mainFrame.BackgroundColor3 = uiBG
-    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BackgroundTransparency = 0.1
     mainFrame.BorderSizePixel = 0
     mainFrame.Active = true
     mainFrame.Parent = screenGui
+
+    local mainCorner = Instance_new("UICorner", mainFrame)
+    mainCorner.CornerRadius = UDim.new(0, 10)
+
+    local mainStroke = Instance_new("UIStroke", mainFrame)
+    mainStroke.Color = uiAccent
+    mainStroke.Thickness = 1.5
+    mainStroke.Transparency = 0.5
     
     -- Dragging Logic
     local dragStart, startPos, draggingFrame
@@ -375,45 +383,36 @@ function mainScript()
     local bgImg = Instance_new("ImageLabel")
     bgImg.Size = UDim2_new(1, 0, 1, 0)
     bgImg.Image = animeImageId
-    bgImg.ImageTransparency = 0.5
+    bgImg.ImageTransparency = 0.7
     bgImg.BackgroundTransparency = 1
     bgImg.ScaleType = Enum.ScaleType.Crop
     bgImg.Parent = mainFrame
+    Instance_new("UICorner", bgImg).CornerRadius = UDim.new(0, 10)
 
-    local mainStroke = Instance_new("UIStroke", mainFrame)
-    mainStroke.Color = uiAccent
-    mainStroke.Thickness = 2
+    -- Top Navigation Bar
+    local topBar = Instance_new("Frame")
+    topBar.Size = UDim2_new(1, 0, 0, 45)
+    topBar.BackgroundColor3 = Color3_fromRGB(0, 0, 0)
+    topBar.BackgroundTransparency = 0.6
+    topBar.BorderSizePixel = 0
+    topBar.ZIndex = 3
+    topBar.Parent = mainFrame
+    Instance_new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
 
-    -- Sidebar
-    local sidebar = Instance_new("Frame")
-    sidebar.Size = UDim2_new(0, 160, 1, 0)
-    sidebar.BackgroundColor3 = Color3_fromRGB(0, 0, 0)
-    sidebar.BackgroundTransparency = 0.4
-    sidebar.BorderSizePixel = 0
-    sidebar.ZIndex = 2
-    sidebar.Parent = mainFrame
+    local topBarLayout = Instance_new("UIListLayout", topBar)
+    topBarLayout.FillDirection = Enum.FillDirection.Horizontal
+    topBarLayout.Padding = UDim.new(0, 10)
+    topBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    topBarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local title = Instance_new("TextLabel")
-    title.Size = UDim2_new(1, 0, 0, 70)
-    title.Text = "KFS HUB"
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 22
-    title.TextColor3 = uiAccent
-    title.BackgroundTransparency = 1
-    title.Parent = sidebar
-
-    local sidebarLayout = Instance_new("UIListLayout", sidebar)
-    sidebarLayout.Padding = UDim.new(0, 5)
-    sidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-    local sidebarPadding = Instance_new("UIPadding", sidebar)
-    sidebarPadding.PaddingTop = UDim.new(0, 70)
+    local topBarPadding = Instance_new("UIPadding", topBar)
+    topBarPadding.PaddingLeft = UDim.new(0, 10)
+    topBarPadding.PaddingRight = UDim.new(0, 10)
 
     -- Tab Container
     local container = Instance_new("Frame")
-    container.Size = UDim2_new(1, -160, 1, 0)
-    container.Position = UDim2_new(0, 160, 0, 0)
+    container.Size = UDim2_new(1, 0, 1, -45)
+    container.Position = UDim2_new(0, 0, 0, 45)
     container.BackgroundTransparency = 1
     container.ZIndex = 2
     container.Parent = mainFrame
@@ -426,19 +425,18 @@ function mainScript()
         tab.BackgroundTransparency = 1
         tab.BorderSizePixel = 0
         tab.ScrollBarThickness = 2
+        tab.ScrollBarImageColor3 = uiAccent
         tab.AutomaticCanvasSize = Enum.AutomaticSize.Y
         tab.CanvasSize = UDim2_new(0, 0, 0, 0)
         tab.ZIndex = 2
         tab.Parent = parent
         
         local layout = Instance_new("UIListLayout", tab)
-        layout.Padding = UDim.new(0, 10)
+        layout.Padding = UDim.new(0, 12)
         layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         layout.SortOrder = Enum.SortOrder.LayoutOrder
         
         local padding = Instance_new("UIPadding", tab)
-        padding.PaddingLeft = UDim.new(0, 5)
-        padding.PaddingRight = UDim.new(0, 5)
         padding.PaddingTop = UDim.new(0, 5)
         padding.PaddingBottom = UDim.new(0, 10)
         
@@ -452,97 +450,170 @@ function mainScript()
     -- UI HELPERS
     local function createTabBtn(name, parent)
         local btn = Instance_new("TextButton")
-        btn.Size = UDim2_new(1, -20, 0, 45)
-        btn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
-        btn.BackgroundTransparency = 0.3
+        btn.Size = UDim2_new(0, 120, 1, -10)
+        btn.BackgroundColor3 = Color3_fromRGB(255, 255, 255)
+        btn.BackgroundTransparency = 1
         btn.Text = name
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = 13
-        btn.TextColor3 = uiText
-        btn.ZIndex = 3
+        btn.TextColor3 = uiDimText
+        btn.ZIndex = 4
         btn.Parent = parent
+        
+        local indicator = Instance_new("Frame")
+        indicator.Name = "Indicator"
+        indicator.Size = UDim2_new(0.8, 0, 0, 2)
+        indicator.Position = UDim2_new(0.1, 0, 1, -2)
+        indicator.BackgroundColor3 = uiAccent
+        indicator.BorderSizePixel = 0
+        indicator.BackgroundTransparency = 1
+        indicator.ZIndex = 5
+        indicator.Parent = btn
+        
         return btn
     end
 
-    local function createSectionTitle(name, parent)
-        local label = Instance_new("TextLabel")
-        label.Size = UDim2_new(1, 0, 0, 30)
-        label.Text = "— " .. string_upper(name) .. " —"
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 13
-        label.TextColor3 = uiAccent
-        label.BackgroundTransparency = 1
-        label.ZIndex = 3
-        label.Parent = parent
-        return label
+    local function createSectionCard(name, parent)
+        local card = Instance_new("Frame")
+        card.Size = UDim2_new(1, -10, 0, 0)
+        card.BackgroundColor3 = uiCard
+        card.BackgroundTransparency = 0.4
+        card.BorderSizePixel = 0
+        card.ZIndex = 3
+        card.Parent = parent
+        Instance_new("UICorner", card).CornerRadius = UDim.new(0, 8)
+        
+        local cardLayout = Instance_new("UIListLayout", card)
+        cardLayout.Padding = UDim.new(0, 8)
+        cardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        local cardPadding = Instance_new("UIPadding", card)
+        cardPadding.PaddingTop = UDim.new(0, 10)
+        cardPadding.PaddingBottom = UDim.new(0, 10)
+        cardPadding.PaddingLeft = UDim.new(0, 12)
+        cardPadding.PaddingRight = UDim.new(0, 12)
+        
+        local title = Instance_new("TextLabel")
+        title.Size = UDim2_new(1, 0, 0, 20)
+        title.Text = string_upper(name)
+        title.Font = Enum.Font.GothamBold
+        title.TextSize = 12
+        title.TextColor3 = uiAccent
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.BackgroundTransparency = 1
+        title.ZIndex = 4
+        title.Parent = card
+        
+        card.AutomaticSize = Enum.AutomaticSize.Y
+        return card
     end
 
     local function createToggle(name, parent, callback)
-        local btn = Instance_new("TextButton")
-        btn.Size = UDim2_new(1, 0, 0, 40)
-        btn.BackgroundColor3 = Color3_fromRGB(10, 10, 10)
-        btn.BackgroundTransparency = 0.4
-        btn.Text = "  " .. string_upper(name) .. ": OFF"
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 12
-        btn.TextColor3 = uiDimText
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.ZIndex = 3
-        btn.Parent = parent
+        local frame = Instance_new("Frame")
+        frame.Size = UDim2_new(1, 0, 0, 30)
+        frame.BackgroundTransparency = 1
+        frame.ZIndex = 4
+        frame.Parent = parent
         
-        local stroke = Instance_new("UIStroke", btn)
-        stroke.Color = uiAccent
-        stroke.Thickness = 1
-        stroke.Transparency = 0.8
+        local label = Instance_new("TextLabel")
+        label.Size = UDim2_new(1, -45, 1, 0)
+        label.Text = name
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 13
+        label.TextColor3 = uiDimText
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.ZIndex = 5
+        label.Parent = frame
         
-        btn.MouseButton1Click:Connect(function() callback(btn) end)
-        return btn
+        local switchBG = Instance_new("TextButton")
+        switchBG.Size = UDim2_new(0, 34, 0, 18)
+        switchBG.Position = UDim2_new(1, -34, 0.5, -9)
+        switchBG.BackgroundColor3 = Color3_fromRGB(45, 45, 45)
+        switchBG.Text = ""
+        switchBG.BorderSizePixel = 0
+        switchBG.ZIndex = 5
+        switchBG.Parent = frame
+        Instance_new("UICorner", switchBG).CornerRadius = UDim.new(1, 0)
+        
+        local circle = Instance_new("Frame")
+        circle.Size = UDim2_new(0, 14, 0, 14)
+        circle.Position = UDim2_new(0, 2, 0.5, -7)
+        circle.BackgroundColor3 = Color3_fromRGB(255, 255, 255)
+        circle.BorderSizePixel = 0
+        circle.ZIndex = 6
+        circle.Parent = switchBG
+        Instance_new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+        
+        local state = false
+        local function update()
+            state = not state
+            circle:TweenPosition(UDim2_new(0, state and 18 or 2, 0.5, -7), "Out", "Quart", 0.2, true)
+            switchBG.BackgroundColor3 = state and uiAccent or Color3_fromRGB(45, 45, 45)
+            callback(state)
+        end
+        
+        switchBG.MouseButton1Click:Connect(update)
+        return {update = update, frame = frame}
     end
 
     local function createSlider(name, min, max, current, parent, callback)
         local frame = Instance_new("Frame")
-        frame.Size = UDim2_new(1, 0, 0, 55)
+        frame.Size = UDim2_new(1, 0, 0, 45)
         frame.BackgroundTransparency = 1
-        frame.ZIndex = 3
+        frame.ZIndex = 4
         frame.Parent = parent
         
         local label = Instance_new("TextLabel")
-        label.Size = UDim2_new(1, 0, 0, 25)
-        label.Text = string_upper(name) .. ": " .. math_floor(current)
+        label.Size = UDim2_new(1, 0, 0, 15)
+        label.Text = name .. ": " .. math_floor(current)
         label.Font = Enum.Font.GothamBold
         label.TextSize = 12
         label.TextColor3 = uiDimText
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.BackgroundTransparency = 1
-        label.ZIndex = 4
+        label.ZIndex = 5
         label.Parent = frame
         
-        local bar = Instance_new("Frame")
-        bar.Size = UDim2_new(1, 0, 0, 8)
-        bar.Position = UDim2_new(0, 0, 0, 30)
-        bar.BackgroundColor3 = Color3_fromRGB(30, 30, 30)
-        bar.BackgroundTransparency = 0.3
-        bar.BorderSizePixel = 0
-        bar.ZIndex = 4
-        bar.Parent = frame
+        local sliderBG = Instance_new("Frame")
+        sliderBG.Size = UDim2_new(1, 0, 0, 4)
+        sliderBG.Position = UDim2_new(0, 0, 0, 30)
+        sliderBG.BackgroundColor3 = Color3_fromRGB(40, 40, 40)
+        sliderBG.BorderSizePixel = 0
+        sliderBG.ZIndex = 5
+        sliderBG.Parent = frame
+        Instance_new("UICorner", sliderBG).CornerRadius = UDim.new(1, 0)
         
         local fill = Instance_new("Frame")
         fill.Size = UDim2_new((current - min) / (max - min), 0, 1, 0)
         fill.BackgroundColor3 = uiAccent
         fill.BorderSizePixel = 0
-        fill.ZIndex = 5
-        fill.Parent = bar
+        fill.ZIndex = 6
+        fill.Parent = sliderBG
+        Instance_new("UICorner", fill).CornerRadius = UDim.new(1, 0)
         
-        local function update(input)
+        local thumb = Instance_new("Frame")
+        thumb.Size = UDim2_new(0, 12, 0, 12)
+        thumb.Position = UDim2_new((current - min) / (max - min), -6, 0.5, -6)
+        thumb.BackgroundColor3 = Color3_fromRGB(255, 255, 255)
+        thumb.BorderSizePixel = 0
+        thumb.ZIndex = 7
+        thumb.Parent = sliderBG
+        Instance_new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+        Instance_new("UIStroke", thumb).Color = uiAccent
+        
+        local function update()
             local mousePos = UserInputService:GetMouseLocation().X
-            local relPos = math_clamp((mousePos - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            local relPos = math_clamp((mousePos - sliderBG.AbsolutePosition.X) / sliderBG.AbsoluteSize.X, 0, 1)
             local val = min + (max - min) * relPos
             fill.Size = UDim2_new(relPos, 0, 1, 0)
-            label.Text = string_upper(name) .. ": " .. math_floor(val)
+            thumb.Position = UDim2_new(relPos, -6, 0.5, -6)
+            label.Text = name .. ": " .. math_floor(val)
             callback(val)
         end
         
-        bar.InputBegan:Connect(function(input)
+        sliderBG.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 dragging = true
                 update()
@@ -564,122 +635,138 @@ function mainScript()
     end
 
     -- Tab Selection
-    local mBtn = createTabBtn("MOVIMENTAÇÃO", sidebar)
-    local cBtn = createTabBtn("COMBATE", sidebar)
+    local mBtn = createTabBtn("MOVIMENTAÇÃO", topBar)
+    local cBtn = createTabBtn("COMBATE", topBar)
     
     local function selectTab(btn, tab)
         movementTab.Visible = false
         combatTab.Visible = false
-        mBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
-        mBtn.TextColor3 = uiText
-        cBtn.BackgroundColor3 = Color3_fromRGB(20, 20, 20)
-        cBtn.TextColor3 = uiText
+        mBtn.TextColor3 = uiDimText
+        mBtn.Indicator.BackgroundTransparency = 1
+        cBtn.TextColor3 = uiDimText
+        cBtn.Indicator.BackgroundTransparency = 1
         
         tab.Visible = true
-        btn.BackgroundColor3 = uiAccent
-        btn.TextColor3 = Color3_fromRGB(0, 0, 0)
+        btn.TextColor3 = uiAccent
+        btn.Indicator.BackgroundTransparency = 0
     end
 
     mBtn.MouseButton1Click:Connect(function() selectTab(mBtn, movementTab) end)
     cBtn.MouseButton1Click:Connect(function() selectTab(cBtn, combatTab) end)
     selectTab(mBtn, movementTab)
 
-    -- ======= CONTENT =======
-    local function toggleESP(btn)
-        espEnabled = not espEnabled
-        btn.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
-        btn.TextColor3 = espEnabled and uiAccent or uiDimText
+    -- ======= RE-INJETAR BUTTON =======
+    local reInjectBtn = createTabBtn("RE-INJETAR", topBar)
+    reInjectBtn.TextColor3 = Color3_fromRGB(255, 200, 0)
+    reInjectBtn.Indicator.BackgroundColor3 = Color3_fromRGB(255, 200, 0)
+
+    local function performReInject()
+        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
+            createNotification("BUSCANDO ATUALIZAÇÃO...", Color3_fromRGB(255, 200, 0))
+            local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
+            if success and result then
+                local func, err = loadstring(result)
+                if func then
+                    createNotification("REINICIANDO SCRIPT...", uiAccent)
+                    task_wait(0.5)
+                    getgenv().KFSHUB_Unload()
+                    task_spawn(func)
+                else
+                    createNotification("ERRO NO SCRIPT BAIXADO!", Color3_fromRGB(255, 50, 50))
+                    warn("KFS HUB Error: " .. tostring(err))
+                end
+            else
+                createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
+            end
+        else
+            createNotification("URL DO GITHUB NÃO CONFIGURADA!", Color3_fromRGB(255, 50, 50))
+            warn("KFS HUB: Por favor, configure a URL do seu GitHub Raw na linha 50 do script.")
+        end
     end
 
-    local function toggleFly(btn)
+    reInjectBtn.MouseButton1Click:Connect(performReInject)
+
+    -- ======= CONTENT =======
+    local visualCard = createSectionCard("Visuais (ESP)", movementTab)
+    local function toggleESP()
+        espEnabled = not espEnabled
+        createNotification("ESP: " .. (espEnabled and "ON" or "OFF"), espEnabled and uiAccent or Color3_fromRGB(255, 50, 50))
+    end
+    local espSwitch = createToggle("ESP System", visualCard, toggleESP)
+    createSlider("Alcance", espRangeMin, espRangeMax, espMaxDistance, visualCard, function(v) espMaxDistance = v end)
+
+    local moveCard = createSectionCard("Movimento", movementTab)
+    local function toggleFly()
         flyEnabled = not flyEnabled
-        btn.Text = "  FLY MODE: " .. (flyEnabled and "ON" or "OFF")
-        btn.TextColor3 = flyEnabled and uiAccent or uiDimText
-        
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        
         if flyEnabled then
             if hrp then
                 bodyVelocity = Instance_new("BodyVelocity")
                 bodyVelocity.MaxForce = Vector3_new(1e6, 1e6, 1e6)
                 bodyVelocity.Velocity = Vector3_zero
                 bodyVelocity.Parent = hrp
-                
                 bodyGyro = Instance_new("BodyGyro")
                 bodyGyro.MaxTorque = Vector3_new(1e6, 1e6, 1e6)
                 bodyGyro.P = 15000
                 bodyGyro.CFrame = camera.CFrame
                 bodyGyro.Parent = hrp
             end
-            createNotification("FLY ATIVADO (F)", uiAccent)
+            createNotification("Fly Ativado (F)", uiAccent)
         else
             if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
             if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
             if hrp then hrp.Velocity = Vector3_zero end
-            createNotification("FLY DESATIVADO (F)", Color3_fromRGB(255, 50, 50))
+            createNotification("Fly Desativado (F)", Color3_fromRGB(255, 50, 50))
         end
     end
+    local flySwitch = createToggle("Fly Mode", moveCard, toggleFly)
+    createSlider("Velocidade", flySpeedMin, flySpeedMax, flySpeed, moveCard, function(v) flySpeed = v end)
 
-    local function toggleNoclip(btn)
+    local function toggleNoclip()
         noclipEnabled = not noclipEnabled
-        btn.Text = "  NOCLIP (PAREDES): " .. (noclipEnabled and "ON" or "OFF")
-        btn.TextColor3 = noclipEnabled and uiAccent or uiDimText
-        
         if noclipEnabled then
             updateCharCache()
-            createNotification("NOCLIP ATIVADO (U)", uiAccent)
+            createNotification("Noclip Ativado (U)", uiAccent)
         else
             updateCharCache()
             for _, part in ipairs(characterParts) do
                 if part and part.Parent then part.CanCollide = true end
             end
-            createNotification("NOCLIP DESATIVADO (U)", Color3_fromRGB(255, 50, 50))
+            createNotification("Noclip Desativado (U)", Color3_fromRGB(255, 50, 50))
         end
     end
+    local noclipSwitch = createToggle("Noclip (Paredes)", moveCard, toggleNoclip)
 
-    local function toggleAimbot(btn)
+    local aimCard = createSectionCard("Aimbot", combatTab)
+    local function toggleAimbot()
         aimbotEnabled = not aimbotEnabled
-        btn.Text = "  AIMBOT SYSTEM: " .. (aimbotEnabled and "ON" or "OFF")
-        btn.TextColor3 = aimbotEnabled and uiAccent or uiDimText
         currentAimbotTarget = nil
         if aimbotEnabled then
-            createNotification("AIMBOT ATIVADO (G)", uiAccent)
+            createNotification("Aimbot Ativado (G)", uiAccent)
         else
-            createNotification("AIMBOT DESATIVADO (G)", Color3_fromRGB(255, 50, 50))
+            createNotification("Aimbot Desativado (G)", Color3_fromRGB(255, 50, 50))
         end
     end
-
-    createSectionTitle("VISUAIS (ESP)", movementTab)
-    local espBtn = createToggle("ESP SYSTEM", movementTab, toggleESP)
-    espBtn.Text = "  ESP SYSTEM: " .. (espEnabled and "ON" or "OFF")
-    espBtn.TextColor3 = espEnabled and uiAccent or uiDimText
-    createSlider("ALCANCE ESP", espRangeMin, espRangeMax, espMaxDistance, movementTab, function(v) espMaxDistance = v end)
-
-    createSectionTitle("MOVIMENTO", movementTab)
-    local flyBtn = createToggle("FLY MODE", movementTab, toggleFly)
-    createSlider("VELOCIDADE FLY", flySpeedMin, flySpeedMax, flySpeed, movementTab, function(v) flySpeed = v end)
-
-    local noclipBtn = createToggle("NOCLIP (PAREDES)", movementTab, toggleNoclip)
-
-    createSectionTitle("COMBATE (AIMBOT)", combatTab)
-    local aimbotBtn = createToggle("AIMBOT SYSTEM", combatTab, toggleAimbot)
-    createToggle("PARTE: CABEÇA", combatTab, function(b)
+    local aimbotSwitch = createToggle("Aimbot System", aimCard, toggleAimbot)
+    
+    local function toggleAimPart()
         aimbotTargetPart = (aimbotTargetPart == "Head") and "HumanoidRootPart" or "Head"
-        b.Text = "  PARTE: " .. (aimbotTargetPart == "Head" and "CABEÇA" or "TORSO")
-    end)
-    createToggle("ALVOS: TODOS", combatTab, function(b)
+        createNotification("Parte: " .. (aimbotTargetPart == "Head" and "Cabeça" or "Torso"), uiAccent)
+    end
+    createToggle("Alvo: Torso/Cabeça", aimCard, toggleAimPart)
+
+    local function toggleAimType()
         if aimbotTargetType == "All" then aimbotTargetType = "Players"
         elseif aimbotTargetType == "Players" then aimbotTargetType = "Bots"
         else aimbotTargetType = "All" end
-        b.Text = "  ALVOS: " .. string_upper(aimbotTargetType)
-    end)
+        createNotification("Alvos: " .. aimbotTargetType, uiAccent)
+    end
+    createToggle("Filtrar Alvos", aimCard, toggleAimType)
 
-    createSectionTitle("HITBOX", combatTab)
-    createToggle("HITBOX AUMENTADA", combatTab, function(b)
+    local hitboxCard = createSectionCard("Hitbox", combatTab)
+    local function toggleHitbox()
         hitboxEnabled = not hitboxEnabled
-        b.Text = "  HITBOX AUMENTADA: " .. (hitboxEnabled and "ON" or "OFF")
-        b.TextColor3 = hitboxEnabled and uiAccent or uiDimText
         if not hitboxEnabled then
             for _, p in ipairs(Players:GetPlayers()) do
                 if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -688,9 +775,11 @@ function mainScript()
                 end
             end
         end
-    end)
-    createSlider("TAMANHO HITBOX", hitboxMin, hitboxMax, hitboxSize, combatTab, function(v) hitboxSize = v end)
-    createSlider("TRANSPARÊNCIA", 0, 1, hitboxTransparency, combatTab, function(v) hitboxTransparency = v end)
+        createNotification("Hitbox: " .. (hitboxEnabled and "ON" or "OFF"), hitboxEnabled and uiAccent or Color3_fromRGB(255, 50, 50))
+    end
+    createToggle("Hitbox Aumentada", hitboxCard, toggleHitbox)
+    createSlider("Tamanho", hitboxMin, hitboxMax, hitboxSize, hitboxCard, function(v) hitboxSize = v end)
+    createSlider("Transparência", 0, 1, hitboxTransparency, hitboxCard, function(v) hitboxTransparency = v end)
 
     -- ======= TARGETING LOGIC =======
     local function isSpecialBot(char)
@@ -931,28 +1020,15 @@ function mainScript()
         
         -- Keybinds
         elseif input.KeyCode == Enum.KeyCode.F then
-            toggleFly(flyBtn)
+            flySwitch.update()
         elseif input.KeyCode == Enum.KeyCode.U then
-            toggleNoclip(noclipBtn)
+            noclipSwitch.update()
         elseif input.KeyCode == Enum.KeyCode.G then
-            toggleAimbot(aimbotBtn)
+            aimbotSwitch.update()
         
         -- Manual Update / Re-execute
         elseif input.KeyCode == Enum.KeyCode.P then
-            if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
-                createNotification("BUSCANDO ATUALIZAÇÃO...", Color3_fromRGB(255, 200, 0))
-                local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
-                if success and result then
-                    createNotification("REINICIANDO SCRIPT...", uiAccent)
-                    task_wait(1)
-                    getgenv().KFSHUB_Unload()
-                    loadstring(result)()
-                else
-                    createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
-                end
-            else
-                createNotification("URL DO GITHUB NÃO CONFIGURADA!", Color3_fromRGB(255, 50, 50))
-            end
+            performReInject()
         end
     end)
 
