@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 4.2 (Hitbox Keybind H)
+-- Version 4.3 (Emergency Fix - Stable)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "4.2"
+local scriptVersion = "4.3"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -69,10 +69,12 @@ local function checkAuth()
     if isfile(authFile) then
         local content = readfile(authFile)
         local data = string.split(content, "|")
-        local savedKey = data[1]
-        local savedId = data[2]
-        if validKeys[savedKey] and savedId == tostring(userId) then
-            return true
+        if #data >= 2 then
+            local savedKey = data[1]
+            local savedId = data[2]
+            if validKeys[savedKey] and savedId == tostring(userId) then
+                return true
+            end
         end
     end
     return false
@@ -98,7 +100,6 @@ local uiText = Color3_fromRGB(255, 255, 255)
 local uiDimText = Color3_fromRGB(180, 180, 180)
 
 -- State
-local isUnlocked = checkAuth()
 local espEnabled = true
 local hitboxEnabled = false
 local flyEnabled = false
@@ -192,9 +193,11 @@ local function createNotification(text, color)
     
     task_delay(3, function()
         pcall(function()
-            frame:TweenPosition(UDim2_new(0, -300, 1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quart, 0.4, true)
-            task_wait(0.5)
-            screenGui:Destroy()
+            if frame and frame.Parent then
+                frame:TweenPosition(UDim2_new(0, -300, 1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quart, 0.4, true)
+                task_wait(0.5)
+                screenGui:Destroy()
+            end
         end)
     end)
 end
@@ -203,7 +206,7 @@ end
 task_spawn(function()
     while getgenv().KFSHUB_Loaded do
         task_wait(300) 
-        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" then
+        if githubRawURL ~= "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" and githubRawURL ~= "" then
             local success, result = pcall(function() return game:HttpGet(githubRawURL) end)
             if success and result then
                 local remoteVersion = result:match('-- Version ([%d%.]+)')
@@ -298,10 +301,9 @@ local function showKeyGUI()
         if validKeys[inputKey] then
             if writefile then writefile(authFile, inputKey .. "|" .. tostring(userId)) end
             screenGui:Destroy()
-            isUnlocked = true
             createNotification("ACESSO LIBERADO!", Color3_fromRGB(50, 255, 50))
             task_wait(0.5)
-            mainScript()
+            getgenv().KFSHUB_MainScript()
         else
             createNotification("KEY INVÁLIDA!", Color3_fromRGB(255, 50, 50))
         end
@@ -310,7 +312,6 @@ end
 
 -- ======= MAIN SCRIPT WRAPPER =======
 getgenv().KFSHUB_MainScript = function()
-    if not isUnlocked then return end
     getgenv().KFSHUB_Loaded = true
     
     -- ======= NPC CACHE =======
@@ -373,9 +374,6 @@ getgenv().KFSHUB_MainScript = function()
     mainStroke.Thickness = 1.5
     mainStroke.Transparency = 0.5
     
-    -- Dragging Logic (RESTRITO À TOP BAR)
-    local dragStart, startPos, draggingFrame
-    
     local bgImg = Instance_new("ImageLabel")
     bgImg.Size = UDim2_new(1, 0, 1, 0)
     bgImg.Image = animeImageId
@@ -406,6 +404,7 @@ getgenv().KFSHUB_MainScript = function()
     topBarPadding.PaddingRight = UDim.new(0, 10)
 
     -- Dragging Logic Implementation (STRICT TOP BAR ONLY)
+    local dragStart, startPos, draggingFrame = nil, nil, false
     topBar.Active = true
     topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -413,7 +412,6 @@ getgenv().KFSHUB_MainScript = function()
             local barPos = topBar.AbsolutePosition
             local barSize = topBar.AbsoluteSize
             
-            -- Strict check: mouse must be inside the top bar area
             if mousePos.X >= barPos.X and mousePos.X <= barPos.X + barSize.X and 
                mousePos.Y >= barPos.Y and mousePos.Y <= barPos.Y + barSize.Y then
                 
@@ -701,7 +699,6 @@ getgenv().KFSHUB_MainScript = function()
                     task_spawn(func)
                 else
                     createNotification("ERRO NO SCRIPT BAIXADO!", Color3_fromRGB(255, 50, 50))
-                    warn("KFS HUB Error: " .. tostring(err))
                 end
             else
                 createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
@@ -818,7 +815,6 @@ getgenv().KFSHUB_MainScript = function()
     local function isSpecialBot(char)
         if not char then return false end
         local name = char.Name:lower()
-        -- Jailbreak Specific Bosses/Bots
         if name:find("ceo") or name:find("drop") or name:find("boss") or name:find("guard") or name:find("mansion") or name:find("police") then
             return true
         end
@@ -827,30 +823,15 @@ getgenv().KFSHUB_MainScript = function()
 
     local function isValidTarget(char, isAimbot)
         if not (char and char.Parent and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0) then return false end
-        
         local tp = Players:GetPlayerFromCharacter(char)
         if tp then
             if tp == player then return false end
-            -- Team Check (Inimigos apenas)
-            if teamCheck then
-                if player.Team and tp.Team and player.Team == tp.Team then return false end
-            end
-            
-            -- Filter based on Aimbot Mode
-            if isAimbot then
-                if aimbotTargetType == "Bots" then return false end
-            end
+            if teamCheck then if player.Team and tp.Team and player.Team == tp.Team then return false end end
+            if isAimbot and aimbotTargetType == "Bots" then return false end
             return true
         end
-
-        -- For ESP and Hitbox (isAimbot = false), we ONLY want enemy players.
-        -- If we reached here, it's not a player (tp is nil).
         if not isAimbot then return false end
-        
-        -- If it's Aimbot, check if we want bots
         if aimbotTargetType == "Players" then return false end
-        
-        -- Returns true only for special bots (CEO/Drop)
         return isSpecialBot(char)
     end
 
@@ -901,7 +882,6 @@ getgenv().KFSHUB_MainScript = function()
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= player and p.Character then createESP(p.Character) end
                 end
-                
                 local camPos = camera.CFrame.Position
                 local hCount = 0
                 for char, data in next, espObjects do
@@ -910,25 +890,15 @@ getgenv().KFSHUB_MainScript = function()
                         if dist <= espMaxDistance then
                             data.billboard.Enabled = true
                             data.distLabel.Text = math_floor(dist) .. "m"
-                            if hCount < 30 then
-                                data.highlight.Enabled = true
-                                hCount = hCount + 1
-                            else
-                                data.highlight.Enabled = false
-                            end
-                        else
-                            data.billboard.Enabled = false
-                            data.highlight.Enabled = false
-                        end
+                            if hCount < 30 then data.highlight.Enabled = true hCount = hCount + 1 else data.highlight.Enabled = false end
+                        else data.billboard.Enabled = false data.highlight.Enabled = false end
                     else
                         pcall(function() data.highlight:Destroy() data.billboard:Destroy() end)
                         espObjects[char] = nil
                     end
                 end
             else
-                for char, data in next, espObjects do
-                    pcall(function() data.highlight:Destroy() data.billboard:Destroy() end)
-                end
+                for char, data in next, espObjects do pcall(function() data.highlight:Destroy() data.billboard:Destroy() end) end
                 espObjects = {}
             end
             task_wait(0.1)
@@ -940,21 +910,15 @@ getgenv().KFSHUB_MainScript = function()
         local char = player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
         local myPos = char.HumanoidRootPart.Position
-        
-        -- Sticky Logic: Keep current target if still valid
         if currentAimbotTarget and isValidTarget(currentAimbotTarget, true) then
             local tp = currentAimbotTarget:FindFirstChild(aimbotTargetPart) or currentAimbotTarget:FindFirstChild("HumanoidRootPart")
             if tp then
                 local vector, onScreen = camera:WorldToViewportPoint(tp.Position)
-                if onScreen and (tp.Position - myPos).Magnitude <= aimbotMaxDistance then
-                    return currentAimbotTarget
-                end
+                if onScreen and (tp.Position - myPos).Magnitude <= aimbotMaxDistance then return currentAimbotTarget end
             end
         end
-        
         local nearest, shortestMouseDistance = nil, fovRadius
         local center = Vector2_new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-        
         local function check(targetChar)
             if isValidTarget(targetChar, true) then
                 local tp = targetChar:FindFirstChild(aimbotTargetPart) or targetChar:FindFirstChild("HumanoidRootPart")
@@ -963,30 +927,14 @@ getgenv().KFSHUB_MainScript = function()
                     if onScreen then
                         local mouseDist = (Vector2_new(vector.X, vector.Y) - center).Magnitude
                         if mouseDist < shortestMouseDistance then
-                            if (tp.Position - myPos).Magnitude <= aimbotMaxDistance then
-                                shortestMouseDistance = mouseDist
-                                nearest = targetChar
-                            end
+                            if (tp.Position - myPos).Magnitude <= aimbotMaxDistance then shortestMouseDistance = mouseDist nearest = targetChar end
                         end
                     end
                 end
             end
         end
-        
-        -- Check Players
-        if aimbotTargetType ~= "Bots" then
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= player and p.Character then check(p.Character) end
-            end
-        end
-        
-        -- Check Bots (CEO/Drop)
-        if aimbotTargetType ~= "Players" then
-            for _, bot in ipairs(npcCache) do
-                check(bot)
-            end
-        end
-        
+        if aimbotTargetType ~= "Bots" then for _, p in ipairs(Players:GetPlayers()) do if p ~= player and p.Character then check(p.Character) end end end
+        if aimbotTargetType ~= "Players" then for _, bot in ipairs(npcCache) do check(bot) end end
         return nearest
     end
 
@@ -1004,25 +952,16 @@ getgenv().KFSHUB_MainScript = function()
             bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3_zero
             bodyGyro.CFrame = camCF
         end
-        
         if aimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
             currentAimbotTarget = getAimbotTarget()
             if currentAimbotTarget then
                 local tp = currentAimbotTarget:FindFirstChild(aimbotTargetPart) or currentAimbotTarget:FindFirstChild("HumanoidRootPart")
                 if tp then camera.CFrame = CFrame_new(camera.CFrame.Position, tp.Position) end
             end
-        else 
-            currentAimbotTarget = nil 
-        end
+        else currentAimbotTarget = nil end
     end)
 
-    connect(RunService.Stepped, function() 
-        if noclipEnabled then 
-            for _, part in ipairs(characterParts) do 
-                if part and part.Parent then part.CanCollide = false end 
-            end 
-        end 
-    end)
+    connect(RunService.Stepped, function() if noclipEnabled then for _, part in ipairs(characterParts) do if part and part.Parent then part.CanCollide = false end end end end)
 
     task_spawn(function()
         while getgenv().KFSHUB_Loaded do
@@ -1031,11 +970,7 @@ getgenv().KFSHUB_MainScript = function()
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= player and p.Character and isValidTarget(p.Character, false) then
                         local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-                        if hrp then
-                            hrp.Size = hSize
-                            hrp.Transparency = hitboxTransparency
-                            hrp.CanCollide = false
-                        end
+                        if hrp then hrp.Size = hSize hrp.Transparency = hitboxTransparency hrp.CanCollide = false end
                     end
                 end
             end
@@ -1045,32 +980,24 @@ getgenv().KFSHUB_MainScript = function()
 
     connect(UserInputService.InputBegan, function(input, gameProcessed)
         if gameProcessed then return end
-        
-        -- Toggle GUI
         if input.KeyCode == Enum.KeyCode.Y then
             guiVisible = not guiVisible
             mainFrame.Visible = guiVisible
-        
-        -- Keybinds
-        elseif input.KeyCode == Enum.KeyCode.T then
-            espSwitch.update()
-        elseif input.KeyCode == Enum.KeyCode.F then
-            flySwitch.update()
-        elseif input.KeyCode == Enum.KeyCode.U then
-            noclipSwitch.update()
-        elseif input.KeyCode == Enum.KeyCode.G then
-            aimbotSwitch.update()
-        elseif input.KeyCode == Enum.KeyCode.H then
-            hitboxSwitch.update()
-        
-        -- Manual Update / Re-execute
-        elseif input.KeyCode == Enum.KeyCode.P then
-            performReInject()
-        end
+        elseif input.KeyCode == Enum.KeyCode.T then espSwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.F then flySwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.U then noclipSwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.G then aimbotSwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.H then hitboxSwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.P then performReInject() end
     end)
 
     createNotification("KFS HUB CARREGADO!", uiAccent)
 end
 
--- Start
-if isUnlocked then getgenv().KFSHUB_MainScript() else showKeyGUI() end
+-- ======= STARTUP =======
+local isUnlocked = checkAuth()
+if isUnlocked then
+    getgenv().KFSHUB_MainScript()
+else
+    showKeyGUI()
+end
