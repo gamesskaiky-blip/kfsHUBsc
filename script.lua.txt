@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 4.4 (Bot Aimbot & UI Refined)
+-- Version 4.5 (Top Right Panel Positioning)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "4.4"
+local scriptVersion = "4.5"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -359,7 +359,7 @@ getgenv().KFSHUB_MainScript = function()
     local mainFrame = Instance_new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2_new(0, 520, 0, 420)
-    mainFrame.Position = UDim2_new(0.5, -260, 0.5, -210)
+    mainFrame.Position = UDim2_new(1, -540, 0, 80)
     mainFrame.BackgroundColor3 = uiBG
     mainFrame.BackgroundTransparency = 0.1
     mainFrame.BorderSizePixel = 0
