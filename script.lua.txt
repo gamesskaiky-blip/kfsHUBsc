@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 3.7 (Inject Fallback Fix)
+-- Version 3.8 (Fixed Re-Inject Logic)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "3.7"
+local scriptVersion = "3.8"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -125,23 +125,36 @@ end
 -- ======= UNLOAD FUNCTION (CLEANUP) =======
 getgenv().KFSHUB_Unload = function()
     getgenv().KFSHUB_Loaded = false
+    
+    -- Disconnect all connections
     for _, conn in ipairs(scriptConnections) do
         if conn and conn.Connected then conn:Disconnect() end
     end
     scriptConnections = {}
     
-    local gui = CoreGui:FindFirstChild("KFS_UI")
-    if gui then gui:Destroy() end
+    -- Destroy any UI with these names
+    local function destroyUI(name)
+        local gui = CoreGui:FindFirstChild(name)
+        while gui do
+            gui:Destroy()
+            gui = CoreGui:FindFirstChild(name)
+        end
+    end
+    destroyUI("KFS_UI")
+    destroyUI("KFS_Notify")
     
+    -- Clean up physics
     if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
     if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
     
-    local plrs = Players:GetPlayers()
-    for _, p in ipairs(plrs) do
-        if p.Character then
-            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.Size = Vector3_new(2, 2, 1) hrp.Transparency = 1 end
-        end
+    -- Reset hitboxes
+    for _, p in ipairs(Players:GetPlayers()) do
+        pcall(function()
+            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3_new(2, 2, 1)
+                p.Character.HumanoidRootPart.Transparency = 1
+            end
+        end)
     end
 end
 
@@ -296,8 +309,9 @@ local function showKeyGUI()
 end
 
 -- ======= MAIN SCRIPT WRAPPER =======
-function mainScript()
+getgenv().KFSHUB_MainScript = function()
     if not isUnlocked then return end
+    getgenv().KFSHUB_Loaded = true
     
     -- ======= NPC CACHE =======
     local npcCache = {}
@@ -679,12 +693,12 @@ function mainScript()
                 createNotification("ERRO AO BUSCAR SCRIPT!", Color3_fromRGB(255, 50, 50))
             end
         else
-            -- Local Reset Fallback (Se a URL não estiver configurada, apenas reinicia a HUB localmente)
-            createNotification("REINICIANDO HUB (LOCAL)...", Color3_fromRGB(255, 200, 0))
+            -- Local Reset Fallback
+            createNotification("RESETANDO HUB LOCAL...", Color3_fromRGB(255, 200, 0))
             task_wait(0.5)
             getgenv().KFSHUB_Unload()
-            task_delay(0.1, function()
-                task_spawn(mainScript)
+            task_delay(0.2, function()
+                task_spawn(getgenv().KFSHUB_MainScript)
             end)
         end
     end
@@ -1041,4 +1055,4 @@ function mainScript()
 end
 
 -- Start
-if isUnlocked then mainScript() else showKeyGUI() end
+if isUnlocked then getgenv().KFSHUB_MainScript() else showKeyGUI() end
