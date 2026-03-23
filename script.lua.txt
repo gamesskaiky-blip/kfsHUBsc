@@ -1,5 +1,5 @@
 -- KFS SCRIPT EDITION (ULTRA-OPTIMIZED)
--- Version 4.0 (Top Bar Dragging & Slider Fix)
+-- Version 4.2 (Hitbox Keybind H)
 
 -- Re-execution Protection
 if getgenv().KFSHUB_Loaded then
@@ -46,7 +46,7 @@ local authFile = "kfs_auth_v2.txt"
 local animeImageId = "rbxassetid://13111111111" 
 
 -- ======= AUTO-UPDATE CONFIG =======
-local scriptVersion = "4.0"
+local scriptVersion = "4.2"
 local githubRawURL = "COLE_SUA_URL_RAW_DO_GITHUB_AQUI" 
 
 -- ======= VALID KEYS LIST =======
@@ -405,20 +405,22 @@ getgenv().KFSHUB_MainScript = function()
     topBarPadding.PaddingLeft = UDim.new(0, 10)
     topBarPadding.PaddingRight = UDim.new(0, 10)
 
-    -- Dragging Logic Implementation
+    -- Dragging Logic Implementation (STRICT TOP BAR ONLY)
+    topBar.Active = true
     topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingFrame = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
+            local mousePos = UserInputService:GetMouseLocation()
+            local barPos = topBar.AbsolutePosition
+            local barSize = topBar.AbsoluteSize
             
-            local connection
-            connection = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    draggingFrame = false
-                    connection:Disconnect()
-                end
-            end)
+            -- Strict check: mouse must be inside the top bar area
+            if mousePos.X >= barPos.X and mousePos.X <= barPos.X + barSize.X and 
+               mousePos.Y >= barPos.Y and mousePos.Y <= barPos.Y + barSize.Y then
+                
+                draggingFrame = true
+                dragStart = input.Position
+                startPos = mainFrame.Position
+            end
         end
     end)
 
@@ -426,6 +428,12 @@ getgenv().KFSHUB_MainScript = function()
         if draggingFrame and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             mainFrame.Position = UDim2_new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    connect(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingFrame = false
         end
     end)
 
@@ -802,7 +810,7 @@ getgenv().KFSHUB_MainScript = function()
         end
         createNotification("Hitbox: " .. (hitboxEnabled and "ON" or "OFF"), hitboxEnabled and uiAccent or Color3_fromRGB(255, 50, 50))
     end
-    createToggle("Hitbox Aumentada", hitboxCard, hitboxEnabled, toggleHitbox)
+    local hitboxSwitch = createToggle("Hitbox Aumentada", hitboxCard, hitboxEnabled, toggleHitbox)
     createSlider("Tamanho", hitboxMin, hitboxMax, hitboxSize, hitboxCard, function(v) hitboxSize = v end)
     createSlider("Transparência", 0, 1, hitboxTransparency, hitboxCard, function(v) hitboxTransparency = v end)
 
@@ -1052,6 +1060,8 @@ getgenv().KFSHUB_MainScript = function()
             noclipSwitch.update()
         elseif input.KeyCode == Enum.KeyCode.G then
             aimbotSwitch.update()
+        elseif input.KeyCode == Enum.KeyCode.H then
+            hitboxSwitch.update()
         
         -- Manual Update / Re-execute
         elseif input.KeyCode == Enum.KeyCode.P then
